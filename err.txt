@@ -1,0 +1,29 @@
+Error code
+
+[02.01] -> Invalid token in the starting of line
+[02.02] -> Expected variable name for declaration
+[02.03] -> right side node for assignment of variable NOT generated properly
+[02.04] -> Declaration node NOT generaated properly for variable
+[02.05] -> Size of array needs to be either int value or variable
+[02.06] -> Expected ] for the closing of size of array
+[02.07] -> Array of variable size can NOT be initialized
+[02.08] -> Expected { for starting of initialization of array
+[02.09] -> Declaration node NOT generaated properly for array initialization
+[02.10] -> Declaration node NOT generaated properly for array declaration
+[02.11] -> Expected either =(for initialization) or ;(for declaration) but found some other token
+[02.12] -> Declaration node NOT generaated properly for variable declaration
+[02.12] -> Expected either =(for initialization) or [(for array) or ;(for declaration)
+[02.13] -> index of array must be either int or variable
+[02.14] -> Expected ] for the closing of index of array
+[02.15] -> Expected ) for the closing of (
+[02.16] -> Expected lvalue after unary operator
+[02.17] -> Unexpected token found in expression
+[02.18] -> Expected ) but found ;
+[02.19] -> Expected ] but found ;
+[02.20] -> Unexpected ) found in expression
+[02.21] -> Unexpected ] found in expression
+[02.22] -> Unexpected } found in expression
+[02.23] -> Unexpected , found in expression
+[02.24] -> Expected unary or binary operator in expression
+[02.25] -> Expected } for closing of initialization of array
+[02.26] -> Expected ; for the end of statement
