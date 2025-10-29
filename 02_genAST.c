@@ -28,13 +28,15 @@ PrecedenceLookup preLookup[] = {
     {3, OP_AND_AND}, // &&
     {2, OP_OR_OR}, // ||
     {1, OP_EQUAL}, // =
+    {0, SEMI} // ;
 };
 
 ASTNode *parseStatement();
 
 int getPrecedenceValueOf(tokenType type)
 {
-    for (int i = 0; i < preLookup[i].type; i++)
+    int size = sizeof(preLookup) / sizeof(preLookup[0]);
+    for (int i = 0; i<size ; i++)
     {
         if (preLookup[i].type == type)
             return preLookup[i].preNum;
@@ -469,6 +471,20 @@ bool isBinaryOrUnaryOp(tokenType type) {
     }
 }
 
+bool isUnaryOp(tokenType type) {
+    switch (type) {        
+
+        // Unary operators
+        case OP_NOT:
+        case OP_PLUS_PLUS:
+        case OP_MINUS_MINUS:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 
 ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClosingBrack , bool findClosingBraces , bool findComma)
 {
@@ -547,7 +563,7 @@ ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClo
     }
     else if(tok->token_type == OP_PLUS_PLUS || tok->token_type == OP_MINUS_MINUS || tok->token_type == OP_NOT){ // found pre-fix unary operator
         ast_current_index++; // unary token -> expression token        
-        left = parseExpression(9,false,false,false,false); //  parse the expression on which unary is applied
+        left = parseExpression(9,findClosingParan,findClosingBrack,findClosingBraces,findComma); //  parse the expression on which unary is applied
         if(!isLvalue(left)){ // unary operators only allowed before/after lvalues
             printf("02 || Syntax error [02.16] -> Expected lvalue after unary operator\n");
             printf("Exiting...\n\n");
@@ -563,6 +579,10 @@ ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClo
         left = generateStringASTNode(getStringFromQuotes(tok->var_name));
         ast_current_index++;
     }
+    else if(tok->token_type == R_BRACES){
+        ast_current_index++;
+        return NULL;
+    }
     else
     { 
         printf("02 || Syntax error [02.17] -> Unexpected token found in expression\n");
@@ -570,7 +590,7 @@ ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClo
         exit(2);
     }
 
-    while (tokens[ast_current_index] && ast_current_index < token_count - 1)
+    while (tokens[ast_current_index] && ast_current_index < token_count - 1 && tokens[ast_current_index-1]->token_type != SEMI)
     {
         Token *nextTok = tokens[ast_current_index]; // store current token
 
@@ -592,7 +612,7 @@ ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClo
             return left;
         }
 
-        if (nextTok->token_type == R_PARAN){     
+        if (nextTok->token_type == R_PARAN){
             if(findClosingParan){
                 return left;
             }else{
@@ -640,6 +660,10 @@ ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClo
         }
 
         int nextPrec = getPrecedenceValueOf(nextTok->token_type); // get precedence value of current operator
+        // if(nextPrec == -1){
+        //     printf("Error\n");
+        //     exit(2);
+        // }
         if (nextPrec < minPrecedence){ // precedence is lower
             return left;
         }
@@ -647,9 +671,15 @@ ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClo
         tokenType tempOp = nextTok->token_type; // store the operator
         ast_current_index++; // operator token -> next token
 
-        ASTNode *right = parseExpression(nextPrec + 1, findClosingParan,findClosingBrack,false,false); // parse right side of the operator
+        ASTNode *right = parseExpression(nextPrec + 1, findClosingParan,findClosingBrack,findClosingBraces,findComma); // parse right side of the operator
+
+        if(tempOp == OP_EQUAL){
+            left = generateAssignASTNode(left,right);            
+        } else{
+            left = generateBinaryASTNode(tempOp, left, right); // generate operator node
+        }
         
-        left = generateBinaryASTNode(tempOp, left, right); // generate operator node
+        
     }
 
     return left;
@@ -702,117 +732,173 @@ ASTNode* pareseArrayInit(int length){
 
 ASTNode *parseWhile()
 {
-    ast_current_index++;
-    ast_current_index++;
-    ASTNode *cond = parseExpression(0,true,false,false,false);
-    if (tokens[ast_current_index]->token_type == R_PARAN)
-    {
-        ast_current_index++;
-        // printf("check\n");
+    ast_current_index++; // skip while
+    
+    if(tokens[ast_current_index]->token_type != L_PARAN){
+        printf("02 || Syntax error [02.39] -> Expected (\n");
+        printf("Exiting...\n\n");
+        exit(2);
     }
-    ast_current_index++;
+    
+    ast_current_index++; // skip (
+    
+    ASTNode *cond = parseExpression(0,true,false,false,false);
+    
+    if (tokens[ast_current_index]->token_type != R_PARAN)
+    {
+        printf("02 || Syntax error [02.40] -> Expected )\n");
+        printf("Exiting...\n\n");
+        exit(2);        
+    }
+
+    ast_current_index++; // skip )
+
+    if (tokens[ast_current_index]->token_type != L_BRACES){
+        printf("02 || Syntax error [02.41] -> Expected {\n");
+        printf("Exiting...\n\n");
+        exit(2);
+    }
+
+    ast_current_index++; // skip {
+    
     ASTNode *list[MAX];
     int count = 0;
     while (tokens[ast_current_index]->token_type != R_BRACES)
     {
         ASTNode *ans = parseStatement();
         list[count++] = ans;
-        printf("count = %d\n", count);
     }
-    ast_current_index++;
-    ASTNode *body = generateBlockASTNode(list, count);
 
-    ASTNode *temp = generateWhileASTNode(cond, body);
+    ast_current_index++; // skip }
 
-    // all_ast[ast_count++] = temp;
+    ASTNode *body = generateBlockASTNode(list, count); // generate block node
 
-    return temp;
+    ASTNode *temp = generateWhileASTNode(cond, body); // generate while node
+
+    return temp; // return while
 }
 
 ASTNode *parseFor()
 {
     ast_current_index++; // skip 'for'
+
     if (tokens[ast_current_index]->token_type != L_PARAN)
     {
-        printf("Expected '(' after for\n");
-        exit(1);
+        printf("02 || Syntax error [02.42] -> Expected (\n");
+        printf("Exiting...\n\n");
+        exit(2);
     }
-    ast_current_index++;
+    ast_current_index++; // skip (
 
-    // ASTNode *init = parseExpression(0, false , false);
-    ASTNode* init = parseStatement();
-    if (tokens[ast_current_index]->token_type == SEMI){
-        ast_current_index++; // skip ';'
-    }
+    ASTNode* init = parseStatement();        
         
-
-    ASTNode *cond = parseExpression(0, false , false,false,false);
-    if (tokens[ast_current_index]->token_type == SEMI){
-        ast_current_index++; // skip ';'
-    }        
-
+    ASTNode *cond = parseExpression(0, false ,false,false,false);    
     
-    ASTNode *upd = parseExpression(0, true , false,false,false);
-    if (tokens[ast_current_index]->token_type == R_PARAN){
-        ast_current_index++; // skip ')'
+    ASTNode *upd = parseExpression(0,true,false,false,false);
+    
+    if (tokens[ast_current_index]->token_type != R_PARAN){
+        printf("02 || Syntax error [02.45] -> Expected )\n");
+        printf("Exiting...\n\n");
+        exit(2);  
     }
-        
+    
+    ast_current_index++; // skip ')'
 
 
     // 👇 ADD THIS
-    if (tokens[ast_current_index]->token_type == L_BRACES)
-        ast_current_index++; // skip '{'
+    if (tokens[ast_current_index]->token_type != L_BRACES){
+        printf("02 || Syntax error [02.46] -> Expected {\n");
+        printf("Exiting...\n\n");
+        exit(2);  
+    }
+    
+    ast_current_index++; // skip '{'
 
     ASTNode *list[MAX];
     int count = 0;
+
     while (tokens[ast_current_index]->token_type != R_BRACES)
     {
         ASTNode *ans = parseStatement();
         list[count++] = ans;
     }
+
     ast_current_index++; // skip '}'
 
-    ASTNode *body = generateBlockASTNode(list, count);
-    ASTNode *temp = generateForASTNode(init, cond, upd, body);
+    ASTNode *body = generateBlockASTNode(list, count); // generate block node
 
-    return temp;
+    ASTNode *temp = generateForASTNode(init, cond, upd, body); // generate for node
+
+    return temp; // return for node
 }
 
+ASTNode* parseIf();
+
 ASTNode* parseElse(){
-    ast_current_index++; // skip if
-    ast_current_index++; // skip {
+    ast_current_index++; // skip else
+    
+    if(tokens[ast_current_index]->token_type == KEYWORD_IF){
+        ASTNode* body[MAX];
+        body[0] = parseIf(); // body of else only contain 1 ast
+        int count = 1; // count of statements in else block = 1
+        ASTNode *body_2 = generateBlockASTNode(body, count); // generate block node for else
 
-    ASTNode* list[MAX];
-    int count = 0;
+        return body_2;
+    } else if(tokens[ast_current_index]->token_type == L_BRACES){
+        ast_current_index++; // skip {
 
-    while (tokens[ast_current_index]->token_type != R_BRACES)
-    {
-        ASTNode *ans = parseStatement();
-        list[count++] = ans;
+        ASTNode* list[MAX];
+        int count = 0;
+
+        while (tokens[ast_current_index]->token_type != R_BRACES)
+        {
+            ASTNode *ans = parseStatement();
+            list[count++] = ans;
+        }        
+
+        ast_current_index++; // skip }
+
+        ASTNode *body_2 = generateBlockASTNode(list, count); // generate block node for else
+
+        return body_2;
+    } else{
+        printf("02 || Syntax error [02.33] -> Expected if or {\n");
+        printf("Exiting...\n\n");
+        exit(2);
     }
 
-    ast_current_index++;
-
-    ASTNode *body_2 = generateBlockASTNode(list, count);
-
-    return body_2;
+    
 }
 
 ASTNode* parseIf(){
     ast_current_index++; // skip if
+
+    if(tokens[ast_current_index]->token_type != L_PARAN){
+        printf("02 || Syntax error [02.30] -> Expected (\n");
+        printf("Exiting...\n\n");
+        exit(2);
+    }
+    
     ast_current_index++; // skip (
 
     ASTNode* cond = parseExpression(0,true,false,false,false);
 
-    if (tokens[ast_current_index]->token_type == R_PARAN){
-        ast_current_index++; // skip ')'
+    if (tokens[ast_current_index]->token_type != R_PARAN){
+        printf("02 || Syntax error [02.31] -> Expected )\n");
+        printf("Exiting...\n\n");
+        exit(2);
     }
+    
+    ast_current_index++; // skip ')'
 
-    // 👇 ADD THIS
-    if (tokens[ast_current_index]->token_type == L_BRACES){
-        ast_current_index++; // skip '{'
+    if (tokens[ast_current_index]->token_type != L_BRACES){
+        printf("02 || Syntax error [02.32] -> Expected {\n");
+        printf("Exiting...\n\n");
+        exit(2);
     }
-
+    
+    ast_current_index++; // skip '{'
+    
     ASTNode* list[MAX];
     int count = 0;
 
@@ -822,25 +908,41 @@ ASTNode* parseIf(){
         list[count++] = ans;
     }
 
-    ast_current_index++;
+    ast_current_index++; // skip }
 
     ASTNode *body = generateBlockASTNode(list, count);
 
-    if(tokens[ast_current_index]->token_type == KEYWORD_ELSE){
+    if(tokens[ast_current_index]->token_type == KEYWORD_ELSE){ // found else condition also
         ASTNode* body_2 = parseElse();
-        ASTNode *temp = generateIfElseASTNode(cond,body,body_2);
-        return temp;
+        ASTNode *temp = generateIfElseASTNode(cond,body,body_2); // generate if-else node
+        return temp; // return node
     }
 
     
-    ASTNode *temp = generateIfASTNode(cond,body);        
+    ASTNode *temp = generateIfASTNode(cond,body); // generate if node      
 
-    return temp;
+    return temp; // return node
         
 
 }
 
+ASTNode* parsePreUnary(){
+    tokenType type = tokens[ast_current_index]->token_type; // store unary operator
 
+    ast_current_index++; // skip current unary operator
+    
+    ASTNode* right = parseExpression(9,false,false,false,false); // parse right side of unary operator
+
+    if(!isLvalue(right)){ // right is NOT lvalue
+        printf("02 || Syntax error [02.38] -> Expected lvalue\n");
+        printf("Exiting...\n\n");
+        exit(2);   
+    }
+
+    right = generateUnaryASTNode(type , right); // generate unary node
+    
+    return right; // return
+}
 
 ASTNode *parseAssignment()
 {
@@ -850,19 +952,69 @@ ASTNode *parseAssignment()
     ASTNode* var = NULL;
 
 
-    if(tokens[ast_current_index+1]->token_type == OP_EQUAL){
-        var = generateVarASTNode(tokens[ast_current_index]->var_name);
-        ast_current_index = ast_current_index + 2;
+    if(tokens[ast_current_index+1]->token_type == OP_EQUAL){ // variable assignment
+        var = generateVarASTNode(tokens[ast_current_index]->var_name);        
+        ast_current_index = ast_current_index + 2;        
     } else if(tokens[ast_current_index+1]->token_type == L_BRACK){ // starting [ of array found
         int store = ast_current_index;
         ast_current_index = ast_current_index + 2;
-        ASTNode* arraySize = parseExpression(0,false,true,false,false);
+        ASTNode* arraySize = parseExpression(0,false,true,false,false); // parse the index for assignment
         var = generateArrayASTNode(tokens[store]->var_name , arraySize);
-        if(tokens[ast_current_index]->token_type == R_BRACK){
-            ast_current_index++;
+        if(tokens[ast_current_index]->token_type != R_BRACK){ // missing ]
+            printf("02 || Syntax error [02.27] -> Expected ]\n");
+            printf("Exiting...\n\n");
+            exit(2);            
         }
-        ast_current_index++; // go from = to starting of right expression        
+        ast_current_index++; // skip ] token
+
+        if(isUnaryOp(tokens[ast_current_index]->token_type)){ // found unary operator after array
+            if(tokens[ast_current_index]->token_type == OP_NOT){ // ! not allowed in post fix
+                printf("02 || Syntax error [02.36] -> ! NOT allowed in post-fix\n");
+                printf("Exiting...\n\n");
+                exit(2);
+            }
+
+            var = generateUnaryASTNode(tokens[ast_current_index]->token_type , var); // generate unary node
+
+            if(tokens[ast_current_index+1]->token_type != SEMI){ // expected ; at end of statement
+                printf("02 || Syntax error [02.37] -> Expected ;\n");
+                printf("Exiting...\n\n");
+                exit(2);
+            }
+
+            ast_current_index = ast_current_index + 2; // skip unary operand and semi
+
+            return var;
+        }
+
+        if(tokens[ast_current_index]->token_type != OP_EQUAL){ // missing =
+            printf("02 || Syntax error [02.28] -> Expected =\n");
+            printf("Exiting...\n\n");
+            exit(2);
+        }
+        ast_current_index++; // = token -> starting of expression  
             
+    } else if(isUnaryOp(tokens[ast_current_index+1]->token_type)){
+        if(tokens[ast_current_index+1]->token_type == OP_NOT){ // ! not allowed in post fix
+            printf("02 || Syntax error [02.34] -> ! NOT allowed in post-fix\n");
+            printf("Exiting...\n\n");
+            exit(2);
+        }
+        var = generateUnaryASTNode(tokens[ast_current_index+1]->token_type , generateVarASTNode(tokens[ast_current_index]->var_name));
+        
+        if(tokens[ast_current_index+2]->token_type != SEMI){ // expected ; at end of statement
+            printf("02 || Syntax error [02.35] -> Expected ;\n");
+            printf("Exiting...\n\n");
+            exit(2);
+        }
+
+        ast_current_index = ast_current_index + 3;
+        return var;
+    }  
+    else{
+        printf("02 || Syntax error [02.29] -> Expected = or [\n");
+        printf("Exiting...\n\n");
+        exit(2);
     }
         
     ASTNode *right = parseExpression(0, false,false,false,false);
@@ -879,9 +1031,7 @@ ASTNode *parseDeclarations()
         printf("02 || Syntax error [02.02] -> Expected variable name for declaration...\n");
         printf("Exiting...\n\n");
         exit(2);
-    }
-
-    
+    }    
 
     if(tokens[ast_current_index+2]->token_type == OP_EQUAL){ // simple variable assignments
         ast_current_index = ast_current_index + 3; // advance index to starting of right side-expression
@@ -889,7 +1039,7 @@ ASTNode *parseDeclarations()
         int store = ast_current_index; // store it for reference to create decl AST node
         ASTNode* temp = NULL; // initialize the node to NULL
         temp = parseExpression(0,false,false,false,false); // parse right side of =
-        if(!temp){ // parseExpression Error
+        if(!temp){ // parseExpression Errora
             printf("02 || Syntax error [02.03] -> right side node NOT generated properly\n");
             printf("Exiting...\n\n");
             exit(2);
@@ -1006,7 +1156,7 @@ ASTNode *parseStatement()
     {
         temp = parseAssignment();
     }
-    else if (tokens[ast_current_index]->token_type == R_BRACES)
+    else if (tokens[ast_current_index]->token_type == R_BRACES) // syntax check remaining
     {        
         ast_current_index++; // last }
         return NULL;
@@ -1026,8 +1176,10 @@ ASTNode *parseStatement()
     else if (tokens[ast_current_index]->token_type == KEYWORD_WHILE)
     {
         temp = parseWhile();
+    } else if(isUnaryOp(tokens[ast_current_index]->token_type)){
+        temp = parsePreUnary();        
     }    
-    else{        
+    else{
         printf("02 || Syntax error [02.01] -> Invalid token found !!!\n");
         printf("Exiting...\n\n");
         exit(2);

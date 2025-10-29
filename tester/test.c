@@ -217,9 +217,27 @@
 int main(void)
 {    
    
-    a[10 + true] = 10;
-
-    
+    for (i = 0; i < 5; i = i + 1) {
+        if ((x = y + z) > (p = q + r)) {
+            total = total + (x * p);
+            if ((flag = total > 50) && (check = i < 3)) {
+                result = result + (flag + check);
+            } else {
+                result = result - i;
+            }
+        } else {
+            for (j = 0; j < 3; j = j + 1) {
+                if ((a = b + c) > (d = e + f)) {
+                    value = value + (a * j);
+                } else if ((temp = x + y) < (sum = z + j)) {
+                    count = count + temp;
+                } else {
+                    message = "Nested else triggered";
+                }
+            }
+            flag = false;
+        }
+    }
 
    
 

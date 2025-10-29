@@ -27,3 +27,23 @@ Error code
 [02.24] -> Expected unary or binary operator in expression
 [02.25] -> Expected } for closing of initialization of array
 [02.26] -> Expected ; for the end of statement
+[02.27] -> Expected ] for the closing of index of array
+[02.28] -> Expected = for the assigment of array
+[02.29] -> Expected =(for variable assignment) or [(for array assignment)
+[02.30] -> Expected ( for the condtion of IF (opening)
+[02.31] -> Expected ) for the conditon of IF (closing)
+[02.32] -> Expected { for the opening of IF block
+[02.33] -> Expected if or { for valid if-else block
+[02.34] -> ! NOT allowed in post-fix [var]
+[02.35] -> Expected ; at end of statement [var]
+[02.36] -> ! NOT allowed in post-fix [array]
+[02.37] -> Expected ; at end of statement [array]
+[02.38] -> Expected lvalue after unary operator
+[02.39] -> Expected ( for the condtion of WHILE (opening)
+[02.40] -> Expected ) for the conditon of WHILE (closing)
+[02.41] -> Expected { for the opening of WHILE block
+[02.42] -> Expected ( for the starting of FOR init
+[02.43] -> Expected ; after init
+[02.44] -> Expected ; after cond
+[02.45] -> Expected ) for the closing of FOR update 
+[02.46] -> Expected { for starting of for body

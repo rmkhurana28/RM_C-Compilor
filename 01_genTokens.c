@@ -219,7 +219,6 @@ void generateTokens(char* file_name){
     c = fgetc(fptr);
 
     char* temp_name; // pointer to store words from the file
-    int temp_name_count;    
 
     bool shift = false;
 
@@ -448,7 +447,6 @@ char* readNext(FILE* fptr){
     temp_name_count = 1;
     
     if(c == '(' || c == ')' || c == '{' || c == '}' || c == '[' || c == ']'){
-        printf("skipping ->%c<-\n", c);
         return temp_name;
     }
 
