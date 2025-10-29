@@ -2,7 +2,7 @@
 
 ### 🧠 What This Compiler Supports
 
-- Variable declarations (`int`, `double`, `bool`, arrays)
+- Variable declarations (`int`, `double`, `bool` , `char` , arrays)
 - Expressions (arithmetic, logical, relational)
 - Assignment statements
 - Conditional statements (`if`, `else`)
