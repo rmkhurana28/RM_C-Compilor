@@ -306,6 +306,7 @@ Type → int | char | double | bool
 - Blocks are delimited by curly braces (`{}`)
 - ( ) are **NOT supported** on left side of assignment
 - Comments are **not supported** in the current version
+- while declaration of **arrays**, using expressions inside the index part is **NOT** allowed.
 - in **for** loop, only 1 update is allowed at update section
 
 ---
