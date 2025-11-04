@@ -9,6 +9,15 @@ int ast_count = 0;
 
 int ast_current_index = 0;
 
+// symbol table 
+symbol* symbolTable[MAX];
+
+// number of symbols in symbol table
+int symbol_count = 0;
+
+char* all_warnings[MAX];
+int warning_count = 0;
+
 const char* tokenTypeNames[] = {
     "KEYWORD_INT", "KEYWORD_CHAR", "KEYWORD_DOUBLE", "KEYWORD_BOOL",
     "KEYWORD_IF", "KEYWORD_ELSE", "KEYWORD_WHILE", "KEYWORD_FOR",

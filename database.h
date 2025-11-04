@@ -119,7 +119,6 @@ typedef enum {
 
 
 
-
 // ASTNode structure
 typedef struct ASTNode {
     ASTNodeType type;   // Type of this node
@@ -213,6 +212,22 @@ typedef struct ASTNode {
     };
 } ASTNode;
 
+typedef struct symbol{ 
+    char var_name[MAX_NAME]; // symbol name
+    tokenType type; // symbol type
+    bool isArray; // if it is an array
+    char arraySize[MAX_NAME]; // ONLY valid if isArray == true
+    bool isInitialized; // if variable if initialized
+    int scope; // scope of variable
+    int blockId; // block id for variables 
+} symbol;
+
+// symbol table 
+extern symbol* symbolTable[MAX];
+
+// number of symbols in symbol table
+extern int symbol_count;
+
 // Global 
 extern Token* tokens[MAX];
 extern int token_count;
@@ -224,6 +239,9 @@ extern int ast_current_index;
 
 extern const char* tokenTypeNames[];
 
+extern char* all_warnings[MAX];
+extern int warning_count;
+
 // fucntions declarations
 
 // helper functions
@@ -232,7 +250,23 @@ bool isStringSame(char *str1 , char *str2);
 // generate tokens
 void generateTokens(char* file_name);
 
+// generate AST
 void generateAllASTNodes();
+
+// semantic check
+void doSemanticCheck();
+
+// print tokens
+void printAllTokens(void);
+
+// print AST
+void printASTNode(ASTNode* node, int indent);
+void printAllASTNodes();
+
+void printSymbol(symbol* s, int index);
+void printSymbolTable();
+
+void startICG();
 
 
 #endif

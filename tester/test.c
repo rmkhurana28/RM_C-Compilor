@@ -11,7 +11,7 @@
 // comment
 
 #define MAX 128
-
+#define RIDOM false
 /*
     this is multi-line comment
 
@@ -214,36 +214,18 @@
     c = 7.8;
 */
 
-int main(void)
-{    
-   
-    for (i = 0; i < 5; i = i + 1) {
-        if ((x = y + z) > (p = q + r)) {
-            total = total + (x * p);
-            if ((flag = total > 50) && (check = i < 3)) {
-                result = result + (flag + check);
-            } else {
-                result = result - i;
-            }
-        } else {
-            for (j = 0; j < 3; j = j + 1) {
-                if ((a = b + c) > (d = e + f)) {
-                    value = value + (a * j);
-                } else if ((temp = x + y) < (sum = z + j)) {
-                    count = count + temp;
-                } else {
-                    message = "Nested else triggered";
-                }
-            }
-            flag = false;
-        }
+int main() {    
+
+    int a = 10;
+
+    int b = 6;
+
+    a = (a = b);
+
+    if(a = 1){
+        a++;
     }
 
-   
-
+    
 }
-
-
-
-
 

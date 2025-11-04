@@ -329,25 +329,6 @@ ASTNode *generateForASTNode(ASTNode *init, ASTNode *condition, ASTNode *update, 
     return temp;
 }
 
-// ASTNode *generateBlockASTNode(ASTNode **statements, int statement_count)
-// {
-//     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
-
-//     temp->type = AST_BLOCK;
-//     temp->block.statements = statements;
-//     temp->block.statement_count = statement_count;
-
-//     if (ast_count >= MAX)
-//     {
-//         printf("NOT enough storage..\n");
-//         exit(4);
-//     }
-
-//     // all_ast[ast_count++] = temp;
-
-//     return temp;
-// }
-
 ASTNode *generateBlockASTNode(ASTNode **statements, int statement_count)
 {
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
@@ -564,7 +545,10 @@ ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClo
     else if(tok->token_type == OP_PLUS_PLUS || tok->token_type == OP_MINUS_MINUS || tok->token_type == OP_NOT){ // found pre-fix unary operator
         ast_current_index++; // unary token -> expression token        
         left = parseExpression(9,findClosingParan,findClosingBrack,findClosingBraces,findComma); //  parse the expression on which unary is applied
-        if(!isLvalue(left)){ // unary operators only allowed before/after lvalues
+        if(tok->token_type == OP_NOT){
+            left = generateUnaryASTNode(tok->token_type , left); // generate unary node
+        }
+        else if(!isLvalue(left)){ // unary operators only allowed before/after lvalues
             printf("02 || Syntax error [02.16] -> Expected lvalue after unary operator\n");
             printf("Exiting...\n\n");
             exit(2);
@@ -1123,16 +1107,13 @@ ASTNode *parseDeclarations()
     } else if(tokens[ast_current_index+2]->token_type == SEMI) {  // variable declaration ONLY
         ASTNode* temp = NULL;
         temp = generateDeclASTNode(tokens[ast_current_index+1]->var_name , tokens[ast_current_index]->token_type , NULL , false , NULL); 
-        if(!temp){
-            printf("02 || Syntax error [02.12] -> Declaration node NOT generaated properly\n");
-            printf("Exiting...\n\n");
-            exit(2);
-        }
+                
         ast_current_index = ast_current_index + 3; // skip the current decl line
 
         return temp; // return decl node
     } 
     else{
+        printf("AST = %d\n", ast_current_index);
         printf("02 || Syntax error [02.12] -> Expected either = or [ or ;\n");
         printf("Exiting...\n\n");
         exit(2);
