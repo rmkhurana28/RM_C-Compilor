@@ -218,22 +218,39 @@ int main() {
 
     int alpha = 5;
     int beta = 10;
-    int gamma;    
-    char letter = 'A';
-    char symbol = 'B';
-    bool isValid;
-    bool isReady = true;
+    int gamma;
+    int delta[10];
+    bool flag = true;
+    int sum = 0;
+    int counter = 0;
 
-    int arr[10];
-    int sum = ++alpha * 2 + beta++;
-    gamma = ++beta / 3 + arr[2]++;
+    if(++alpha > beta || flag){
+        gamma = alpha++ * 2 + beta;
 
-    symbol = 'c';
-    isValid = (alpha > beta) && (beta < 20);
-    isReady = isValid || (gamma == 10);
-    int total = arr[3]++ * ++arr[5] + alpha;
-    double result;
-    
+        for(int idx = 0; idx < 5; idx++){
+            delta[idx] = ++gamma;
+
+            if(delta[idx] > 20){
+                sum = sum + delta[idx]++;
+            } else {
+                sum = sum + idx;
+            }
+        }
+
+        while(counter < 3 && sum < 100){
+            counter++;
+            beta = beta++ + counter * 2;
+
+            if(beta > 50){
+                flag = false;
+            }
+        }
+    } else {
+        gamma = beta / 2;
+    }
+
+    int result = sum + ++counter + gamma++;
+    bool status = (result > 100) && flag || (alpha == beta);
     
 }
 

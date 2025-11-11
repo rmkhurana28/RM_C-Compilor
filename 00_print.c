@@ -407,7 +407,7 @@ void print3AddressCode() {
                     break;
                     
                 case ADDR_LABEL:
-                    snprintf(instruction, 256, "L%s:", 
+                    snprintf(instruction, 256, "%s:", 
                             addr->label.labelNumber);
                     break;
                     

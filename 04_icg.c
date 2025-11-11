@@ -246,6 +246,94 @@ address* handleUnOpNodes(ASTNode* top){
     }
 }
 
+// generate 3-address code of IF node
+address* handleIfNode(ASTNode* top){
+    address* cond = genAddr(top->if_stmt.condition);
+
+    char* temp_label = generateNewAddrLabel();
+    
+    genIfFalseGoto(getVariableName(cond) , temp_label);
+
+    for(int i=0 ; i<top->if_stmt.then_branch->block.statement_count ; i++){
+        genAddr(top->if_stmt.then_branch->block.statements[i]);
+    }
+
+    genLabel(temp_label);
+
+    return NULL;
+}
+
+// generate 3-address code fo IF-ELSE node
+address* handleIfElseNode(ASTNode* top){
+    address* cond = genAddr(top->if_else_stmt.condition);
+
+    char* temp_label = generateNewAddrLabel();
+    
+    genIfFalseGoto(getVariableName(cond) , temp_label);
+
+    for(int i=0 ; i<top->if_else_stmt.then_branch->block.statement_count ; i++){
+        genAddr(top->if_else_stmt.then_branch->block.statements[i]);
+    }
+
+    char* temp_label_2 = generateNewAddrLabel();
+
+    genGoto(temp_label_2);
+
+    genLabel(temp_label);
+
+    for(int i=0 ; i<top->if_else_stmt.else_branch->block.statement_count ; i++){
+        genAddr(top->if_else_stmt.else_branch->block.statements[i]);
+    }
+
+    genLabel(temp_label_2);
+}
+
+// generate 3-address code fo WHILE node
+address* handleWhileNode(ASTNode* top){
+
+    char* temp_label_2 = generateNewAddrLabel();
+
+    genLabel(temp_label_2);
+
+    address* cond = genAddr(top->if_stmt.condition);
+
+    char* temp_label = generateNewAddrLabel();
+
+    genIfFalseGoto(getVariableName(cond) , temp_label);
+
+    for(int i=0 ; i<top->while_stmt.body->block.statement_count ; i++){
+        genAddr(top->while_stmt.body->block.statements[i]);
+    }
+
+    genGoto(temp_label_2);
+    genLabel(temp_label);
+}
+
+// generate 3-address code fo FOR node
+address* handleForNode(ASTNode* top){
+    address* init = genAddr(top->for_stmt.init);
+
+    char* temp_label = generateNewAddrLabel();
+
+    genLabel(temp_label);
+
+    address* cond = genAddr(top->for_stmt.condition);
+
+    char* temp_label_2 = generateNewAddrLabel();
+
+    genIfFalseGoto(getVariableName(cond) , temp_label_2);
+
+    for(int i=0 ; i<top->for_stmt.body->block.statement_count ; i++){
+        genAddr(top->for_stmt.body->block.statements[i]);
+    }
+
+    address* update = genAddr(top->for_stmt.update);
+
+    genGoto(temp_label);
+
+    genLabel(temp_label_2);
+}
+
 address* genAddr(ASTNode* top){
 
     char value[MAX_NAME];
@@ -287,13 +375,13 @@ address* genAddr(ASTNode* top){
     } else if(top->type == AST_UNOP){
         return handleUnOpNodes(top);        
     } else if(top->type == AST_IF){
-        //
+        return handleIfNode(top);
     } else if(top->type == AST_IF_ELSE){
-        //
+        return handleIfElseNode(top);
     } else if(top->type == AST_FOR){
-        //
+        return handleForNode(top);
     } else if(top->type == AST_WHILE){
-        //
+        return handleWhileNode(top);
     }
     
     return NULL;
