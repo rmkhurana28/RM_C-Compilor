@@ -146,6 +146,7 @@ typedef struct ASTNode {
         struct {
             tokenType op;            // Operator: TOKEN_MINUS, TOKEN_NOT
             struct ASTNode* expr;    // Operand
+            bool isPrefix;          // true if prefix operator
         } unop;                       // AST_UNOP
 
         // Binary operation
@@ -222,6 +223,90 @@ typedef struct symbol{
     int blockId; // block id for variables 
 } symbol;
 
+typedef enum{
+    // basic operations
+    ADDR_ASSIGN,
+    ADDR_BINOP,
+    ADDR_UNOP,
+
+    // control flow
+    ADDR_GOTO,
+    ADDR_IF_F_GOTO,
+    ADDR_IF_T_GOTO,
+    ADDR_LABEL,
+
+    // array evaluation
+    ADDR_ARRAY_READ,
+    ADDR_ARRAY_WRITE,
+    
+} addrType;
+
+// structure of 3-address code
+typedef struct address{
+    addrType type;
+
+    union{
+        // For ADDR_ASSIGN: x = y
+        struct{
+            char result[MAX_NAME];
+            char arg1[MAX_NAME];
+        } assign;
+
+        // For ADDR_BINOP: x = y op z
+        struct{
+            char result[MAX_NAME];
+            char arg1[MAX_NAME];
+            char arg2[MAX_NAME];
+            char op[MAX_NAME];
+        } binop;
+
+        // For ADDR_UNOP: x = op y
+        struct{
+            char result[MAX_NAME];
+            char arg1[MAX_NAME];
+            char op[MAX_NAME];          // Added: !, -, +
+        } unop;
+
+        // For ADDR_GOTO: goto L1
+        struct{
+            char target[MAX_NAME];      // Target label
+        } goto_stmt;
+
+        // For ADDR_IF_F_GOTO: ifFalse condition goto L1
+        struct{
+            char condition[MAX_NAME];   // Condition variable
+            char target[MAX_NAME];      // Target label
+        } if_false;
+
+        // For ADDR_IF_T_GOTO: ifTrue condition goto L1
+        struct{
+            char condition[MAX_NAME];   // Condition variable
+            char target[MAX_NAME];      // Target label
+        } if_true;
+
+        // For ADDR_ARRAY_READ: x = arr[i]
+        struct{
+            char result[MAX_NAME];      // Destination variable
+            char array[MAX_NAME];       // Array name
+            char index[MAX_NAME];       // Index variable/constant
+        } array_read;
+
+        // For ADDR_ARRAY_WRITE: arr[i] = x
+        struct{
+            char array[MAX_NAME];       // Array name
+            char index[MAX_NAME];       // Index variable/constant
+            char value[MAX_NAME];       // Value to store
+        } array_write;
+
+        struct{
+            char labelNumber[MAX_NAME];
+        } label;
+    };    
+} address;
+
+extern address* allAddress[MAX];
+extern int addr_count; 
+
 // symbol table 
 extern symbol* symbolTable[MAX];
 
@@ -266,7 +351,9 @@ void printAllASTNodes();
 void printSymbol(symbol* s, int index);
 void printSymbolTable();
 
+
 void startICG();
+void print3AddressCode();
 
 
 #endif

@@ -18,6 +18,9 @@ int symbol_count = 0;
 char* all_warnings[MAX];
 int warning_count = 0;
 
+address* allAddress[MAX];
+int addr_count = 0;
+
 const char* tokenTypeNames[] = {
     "KEYWORD_INT", "KEYWORD_CHAR", "KEYWORD_DOUBLE", "KEYWORD_BOOL",
     "KEYWORD_IF", "KEYWORD_ELSE", "KEYWORD_WHILE", "KEYWORD_FOR",

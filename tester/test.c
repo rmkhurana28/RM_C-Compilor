@@ -214,18 +214,26 @@
     c = 7.8;
 */
 
-int main() {    
+int main() {        
 
-    int a = 10;
+    int alpha = 5;
+    int beta = 10;
+    int gamma;    
+    char letter = 'A';
+    char symbol = 'B';
+    bool isValid;
+    bool isReady = true;
 
-    int b = 6;
+    int arr[10];
+    int sum = ++alpha * 2 + beta++;
+    gamma = ++beta / 3 + arr[2]++;
 
-    a = (a = b);
-
-    if(a = 1){
-        a++;
-    }
-
+    symbol = 'c';
+    isValid = (alpha > beta) && (beta < 20);
+    isReady = isValid || (gamma == 10);
+    int total = arr[3]++ * ++arr[5] + alpha;
+    double result;
+    
     
 }
 

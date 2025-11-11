@@ -211,13 +211,14 @@ ASTNode *generateArrayASTNode(char *array_name, ASTNode *index)
     return temp;
 }
 
-ASTNode *generateUnaryASTNode(tokenType type, ASTNode *expr)
+ASTNode *generateUnaryASTNode(tokenType type, ASTNode *expr , bool isPrefix)
 {
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
 
     temp->type = AST_UNOP;
     temp->unop.op = type;
     temp->unop.expr = expr;
+    temp->unop.isPrefix = isPrefix;
 
     if (ast_count >= MAX)
     {
@@ -522,7 +523,7 @@ ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClo
 
         if(tokens[ast_current_index]->token_type == OP_PLUS_PLUS || tokens[ast_current_index]->token_type == OP_MINUS_MINUS){ // found post-fix unary operator
             // update left to be a unary node instead of var node
-            left = generateUnaryASTNode(tokens[ast_current_index++]->token_type , left); //generate unary operator and advance the pointor
+            left = generateUnaryASTNode(tokens[ast_current_index++]->token_type , left , false); //generate unary operator and advance the pointor
         }
         
     }
@@ -539,21 +540,23 @@ ASTNode *parseExpression(int minPrecedence, bool findClosingParan , bool findClo
             
         if(tokens[ast_current_index]->token_type == OP_PLUS_PLUS || tokens[ast_current_index]->token_type == OP_MINUS_MINUS){ // found post-fix unary operator
             // update left to be a unary node
-            left = generateUnaryASTNode(tokens[ast_current_index++]->token_type , left); //generate unary operator and advance the pointor
+            left = generateUnaryASTNode(tokens[ast_current_index++]->token_type , left , false); //generate unary operator and advance the pointor
         }
     }
     else if(tok->token_type == OP_PLUS_PLUS || tok->token_type == OP_MINUS_MINUS || tok->token_type == OP_NOT){ // found pre-fix unary operator
         ast_current_index++; // unary token -> expression token        
         left = parseExpression(9,findClosingParan,findClosingBrack,findClosingBraces,findComma); //  parse the expression on which unary is applied
         if(tok->token_type == OP_NOT){
-            left = generateUnaryASTNode(tok->token_type , left); // generate unary node
+            left = generateUnaryASTNode(tok->token_type , left , true); // generate unary node
         }
         else if(!isLvalue(left)){ // unary operators only allowed before/after lvalues
             printf("02 || Syntax error [02.16] -> Expected lvalue after unary operator\n");
             printf("Exiting...\n\n");
             exit(2);
+        } else{
+            left = generateUnaryASTNode(tok->token_type , left , true); // generate unary node
         }
-        left = generateUnaryASTNode(tok->token_type , left); // generate unary node
+        
     }
     else if(tok->token_type == VAL_CHAR){ // 'c'
         left = generateCharASTNode(getCharFromQuotes(tok->var_name));
@@ -923,7 +926,7 @@ ASTNode* parsePreUnary(){
         exit(2);   
     }
 
-    right = generateUnaryASTNode(type , right); // generate unary node
+    right = generateUnaryASTNode(type , right , true); // generate unary node
     
     return right; // return
 }
@@ -958,7 +961,7 @@ ASTNode *parseAssignment()
                 exit(2);
             }
 
-            var = generateUnaryASTNode(tokens[ast_current_index]->token_type , var); // generate unary node
+            var = generateUnaryASTNode(tokens[ast_current_index]->token_type , var , false); // generate unary node
 
             if(tokens[ast_current_index+1]->token_type != SEMI){ // expected ; at end of statement
                 printf("02 || Syntax error [02.37] -> Expected ;\n");
@@ -984,7 +987,7 @@ ASTNode *parseAssignment()
             printf("Exiting...\n\n");
             exit(2);
         }
-        var = generateUnaryASTNode(tokens[ast_current_index+1]->token_type , generateVarASTNode(tokens[ast_current_index]->var_name));
+        var = generateUnaryASTNode(tokens[ast_current_index+1]->token_type , generateVarASTNode(tokens[ast_current_index]->var_name) , false); // generate unary node
         
         if(tokens[ast_current_index+2]->token_type != SEMI){ // expected ; at end of statement
             printf("02 || Syntax error [02.35] -> Expected ;\n");
