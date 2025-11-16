@@ -32,5 +32,13 @@ int main(void) {
 
     print3AddressCode();
 
+    // generate target code (x86-64 assembly)
+    // generateTargetCode();
+    // printTargetCode();
+
+    // generate real target code (fully assemblable x86-64)
+    // generateRealTargetCode();
+    // printRealTargetCode();
+
     exit(0);
 }

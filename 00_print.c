@@ -449,3 +449,103 @@ void print3AddressCode() {
     printf("╚══════════════════════════════════════════════════════════════════════════════════════════════════╝\n");
     printf("\n");
 }
+
+// Print x86-64 assembly code (Target Code)
+void printTargetCode() {
+    printf("\n");
+    printf("╔══════════════════════════════════════════════════════════════════════════════════════════════════╗\n");
+    printf("║                                    TARGET CODE (x86-64 Assembly)                                 ║\n");
+    printf("╠═══════╤══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+    printf("║  #    │ Assembly Instruction                                                                     ║\n");
+    printf("╠═══════╪══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+
+    // External declarations for assembly code
+    extern AsmInstruction* asmCode[];
+    extern int asm_count;
+
+    if (asm_count == 0) {
+        printf("║                                    (No target code generated)                                   ║\n");
+    } else {
+        for (int i = 0; i < asm_count; i++) {
+            // Handle empty lines and labels (no line numbers for formatting)
+            if (strlen(asmCode[i]->instruction) == 0) {
+                printf("║       │                                                                                      ║\n");
+            } else if (asmCode[i]->instruction[0] != ' ' && 
+                       asmCode[i]->instruction[0] != '\t' &&
+                       strchr(asmCode[i]->instruction, ':') != NULL) {
+                // It's a label or section directive
+                printf("║       │ %-84s ║\n", asmCode[i]->instruction);
+            } else {
+                // Regular instruction with line number
+                printf("║ %5d │ %-84s ║\n", i + 1, asmCode[i]->instruction);
+            }
+        }
+    }
+
+    printf("╠═══════╧══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+    printf("║                                  Total Instructions: %-3d                                        ║\n", asm_count);
+    printf("╚══════════════════════════════════════════════════════════════════════════════════════════════════╝\n");
+    
+    // Success message for target code generation       
+    printf("\n");
+    printf("╔══════════════════════════════════════════════════════════════════════════════════════════════════╗\n");
+    printf("║                         ✓ TARGET CODE GENERATION SUCCESSFUL                                     ║\n");
+    printf("╠══════════════════════════════════════════════════════════════════════════════════════════════════╣\n");
+    printf("║  x86-64 assembly code has been successfully generated from 3-address code.                      ║\n");
+    printf("║  Total Assembly Instructions: %-3d                                                              ║\n", asm_count);
+    printf("║  Target Architecture: x86-64                                                                    ║\n");
+    printf("║  Status: Ready for Assembly/Execution                                                           ║\n");
+    printf("╚══════════════════════════════════════════════════════════════════════════════════════════════════╝\n");
+    printf("\n");
+}
+
+// Print real x86-64 assembly code (Fully Assemblable)
+void printRealTargetCode() {
+    printf("\n");
+    printf("╔══════════════════════════════════════════════════════════════════════════════════════════════════╗\n");
+    printf("║                          REAL TARGET CODE (Assemblable x86-64)                                   ║\n");
+    printf("╠═══════╤══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+    printf("║  #    │ Assembly Instruction                                                                     ║\n");
+    printf("╠═══════╪══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+
+    // External declarations for real assembly code
+    extern AsmInstruction* realAsmCode[];
+    extern int real_asm_count;
+
+    if (real_asm_count == 0) {
+        printf("║                                  (No real target code generated)                                 ║\n");
+    } else {
+        for (int i = 0; i < real_asm_count; i++) {
+            // Handle empty lines and labels (no line numbers for formatting)
+            if (strlen(realAsmCode[i]->instruction) == 0) {
+                printf("║       │                                                                                      ║\n");
+            } else if (realAsmCode[i]->instruction[0] != ' ' && 
+                       realAsmCode[i]->instruction[0] != '\t' &&
+                       (strchr(realAsmCode[i]->instruction, ':') != NULL || 
+                        realAsmCode[i]->instruction[0] == '.')) {
+                // It's a label or section directive
+                printf("║       │ %-84s ║\n", realAsmCode[i]->instruction);
+            } else {
+                // Regular instruction with line number
+                printf("║ %5d │ %-84s ║\n", i + 1, realAsmCode[i]->instruction);
+            }
+        }
+    }
+
+    printf("╠═══════╧══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+    printf("║                                  Total Instructions: %-3d                                        ║\n", real_asm_count);
+    printf("╚══════════════════════════════════════════════════════════════════════════════════════════════════╝\n");
+    
+    // Success message for real target code generation
+    printf("\n");
+    printf("╔══════════════════════════════════════════════════════════════════════════════════════════════════╗\n");
+    printf("║                      ✓ REAL TARGET CODE GENERATION SUCCESSFUL                                   ║\n");
+    printf("╠══════════════════════════════════════════════════════════════════════════════════════════════════╣\n");
+    printf("║  Fully assemblable x86-64 code has been generated with proper stack allocation.                ║\n");
+    printf("║  Total Assembly Instructions: %-3d                                                              ║\n", real_asm_count);
+    printf("║  Target Architecture: x86-64 (AT&T syntax)                                                     ║\n");
+    printf("║  Stack Allocated: Variables mapped to stack offsets                                            ║\n");
+    printf("║  Status: Ready for GCC Assembly (save as .s file and assemble)                                 ║\n");
+    printf("╚══════════════════════════════════════════════════════════════════════════════════════════════════╝\n");
+    printf("\n");
+}

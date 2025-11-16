@@ -13,7 +13,7 @@
 
 #define MAX_NAME 32
 #define MINI_MAX 128
-#define MAX 1024
+#define MAX 8192
 
 // tokenType enum
 typedef enum{
@@ -304,8 +304,21 @@ typedef struct address{
     };    
 } address;
 
+// Structure for x86-64 assembly instructions
+typedef struct {
+    char instruction[256];
+} AsmInstruction;
+
 extern address* allAddress[MAX];
 extern int addr_count; 
+
+// Assembly code storage (pseudo-assembly)
+extern AsmInstruction* asmCode[MAX];
+extern int asm_count;
+
+// Real assembly code storage (fully assemblable)
+extern AsmInstruction* realAsmCode[MAX];
+extern int real_asm_count;
 
 // symbol table 
 extern symbol* symbolTable[MAX];
@@ -351,9 +364,17 @@ void printAllASTNodes();
 void printSymbol(symbol* s, int index);
 void printSymbolTable();
 
-
+// intermediate code generation
 void startICG();
 void print3AddressCode();
+
+// target code generation (x86-64)
+void generateTargetCode();
+void printTargetCode();
+
+// real target code generation (fully assemblable x86-64)
+void generateRealTargetCode();
+void printRealTargetCode();
 
 
 #endif
