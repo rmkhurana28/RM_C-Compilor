@@ -66,7 +66,7 @@ void printAllTokens() {
     printf("\n");
 }
 
-
+// Print basic blocks (non-destructive; user may call manually)
 // =====================================================
 //                AST PRINTING SECTION
 // =====================================================
@@ -446,6 +446,260 @@ void print3AddressCode() {
     printf("║  Intermediate code has been successfully generated from the AST.                                ║\n");
     printf("║  Total Instructions Generated: %-3d                                                             ║\n", addr_count);
     printf("║  Status: Ready for Optimization/Target Code Generation                                         ║\n");
+    printf("╚══════════════════════════════════════════════════════════════════════════════════════════════════╝\n");
+    printf("\n");
+}
+
+void printBlocks() {
+    printf("\n");
+    printf("╔══════════════════════════════════════════════════════════════════════════════════════════════════╗\n");
+    printf("║                                      BASIC BLOCKS                                                ║\n");
+    printf("╠═══════╤══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+    printf("║ Block │ Instructions                                                                             ║\n");
+    printf("╠═══════╪══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+
+    if (block_count == 0) {
+        printf("║                                    (No blocks generated)                                         ║\n");
+    } else {
+        for (int i = 0; i < block_count; i++) {
+            block* blk = allBlocks[i];
+            if (!blk) continue;
+
+            // Block header
+            printf("║ B%-4d │                                                                                      ║\n", blk->blockID);
+            printf("║       │ Instructions: %-3d                                                                   ║\n", blk->numberOfAddressesInBlock);
+
+            // In edges
+            if (blk->numCFGIn > 0 && blk->cfg_in) {
+                printf("║       │ In: ");
+                for (int j = 0; j < blk->numCFGIn; j++) {
+                    if (blk->cfg_in[j]) printf("B%d", blk->cfg_in[j]->blockID);
+                    if (j < blk->numCFGIn - 1) printf(", ");
+                }
+                printf("\n");
+            } else {
+                printf("║       │ In: (none)                                                                           ║\n");
+            }
+
+            // Out edges
+            if (blk->numCFGOut > 0 && blk->cfg_out) {
+                printf("║       │ Out: ");
+                for (int j = 0; j < blk->numCFGOut; j++) {
+                    if (blk->cfg_out[j]) printf("B%d", blk->cfg_out[j]->blockID);
+                    if (j < blk->numCFGOut - 1) printf(", ");
+                }
+                printf("\n");
+            } else {
+                printf("║       │ Out: (none)                                                                          ║\n");
+            }
+
+            printf("║       ├──────────────────────────────────────────────────────────────────────────────────────║\n");
+
+            // Print each instruction in the block
+            for (int j = 0; j < blk->numberOfAddressesInBlock; j++) {
+                address* addr = blk->list[j];
+                char instruction[256] = "";
+                if (!addr) continue;
+
+                // Find the global line number (index in allAddress)
+                int globalLineNum = -1;
+                for (int k = 0; k < addr_count; k++) {
+                    if (allAddress[k] == addr) {
+                        globalLineNum = k + 1; // +1 for 1-based indexing
+                        break;
+                    }
+                }
+
+                switch(addr->type) {
+                    case ADDR_ASSIGN:
+                        snprintf(instruction, 256, "%s = %s", addr->assign.result, addr->assign.arg1);
+                        break;
+                    case ADDR_BINOP:
+                        snprintf(instruction, 256, "%s = %s %s %s", addr->binop.result, addr->binop.arg1, addr->binop.op, addr->binop.arg2);
+                        break;
+                    case ADDR_UNOP:
+                        snprintf(instruction, 256, "%s = %s %s", addr->unop.result, addr->unop.op, addr->unop.arg1);
+                        break;
+                    case ADDR_GOTO:
+                        snprintf(instruction, 256, "goto %s", addr->goto_stmt.target);
+                        break;
+                    case ADDR_IF_F_GOTO:
+                        snprintf(instruction, 256, "ifFalse %s goto %s", addr->if_false.condition, addr->if_false.target);
+                        break;
+                    case ADDR_IF_T_GOTO:
+                        snprintf(instruction, 256, "ifTrue %s goto %s", addr->if_true.condition, addr->if_true.target);
+                        break;
+                    case ADDR_LABEL:
+                        snprintf(instruction, 256, "%s:", addr->label.labelNumber);
+                        break;
+                    case ADDR_ARRAY_READ:
+                        snprintf(instruction, 256, "%s = %s[%s]", addr->array_read.result, addr->array_read.array, addr->array_read.index);
+                        break;
+                    case ADDR_ARRAY_WRITE:
+                        snprintf(instruction, 256, "%s[%s] = %s", addr->array_write.array, addr->array_write.index, addr->array_write.value);
+                        break;
+                    default:
+                        snprintf(instruction, 256, "(Unknown instruction type)");
+                        break;
+                }
+
+                if (globalLineNum != -1) {
+                    printf("║       │  [%2d] ◦ [%2d] %-68s ║\n", globalLineNum, j + 1, instruction);
+                } else {
+                    printf("║       │  [??] ◦ [%2d] %-68s ║\n", j + 1, instruction);
+                }
+            }
+
+            // Print GEN/KILL/IN/OUT if they exist
+            if (i < block_prop_count && allBlockProps[i]) {
+                blockProp* prop = allBlockProps[i];
+                
+                printf("║       ├──────────────────────────────────────────────────────────────────────────────────────║\n");
+                printf("║       │ A) Reaching Definitions                                                              ║\n");
+                
+                // Print GEN
+                char genLine[256] = "➢ GEN: ";
+                if (prop->numGen > 0) {
+                    strcat(genLine, "{ ");
+                    for (int j = 0; j < prop->numGen; j++) {
+                        if (prop->gen[j]) {
+                            char genStr[64] = "";
+                            address* addr = prop->gen[j];
+                            // Find the line number (index in allAddress)
+                            int lineNum = -1;
+                            for (int k = 0; k < addr_count; k++) {
+                                if (allAddress[k] == addr) {
+                                    lineNum = k + 1; // +1 for 1-based indexing
+                                    break;
+                                }
+                            }
+                            if (lineNum != -1) {
+                                snprintf(genStr, 64, "%d", lineNum);
+                            } else {
+                                snprintf(genStr, 64, "?");
+                            }
+                            strcat(genLine, genStr);
+                            if (j < prop->numGen - 1) strcat(genLine, ", ");
+                        }
+                    }
+                    strcat(genLine, " }");
+                } else {
+                    strcat(genLine, "∅");
+                }
+                printf("║       │     %-81s ║\n", genLine);
+                
+                // Print KILL
+                char killLine[256] = "➢ KILL: ";
+                if (prop->numKill > 0) {
+                    strcat(killLine, "{ ");
+                    for (int j = 0; j < prop->numKill; j++) {
+                        if (prop->kill[j]) {
+                            char killStr[64] = "";
+                            address* addr = prop->kill[j];
+                            // Find the line number (index in allAddress)
+                            int lineNum = -1;
+                            for (int k = 0; k < addr_count; k++) {
+                                if (allAddress[k] == addr) {
+                                    lineNum = k + 1; // +1 for 1-based indexing
+                                    break;
+                                }
+                            }
+                            if (lineNum != -1) {
+                                snprintf(killStr, 64, "%d", lineNum);
+                            } else {
+                                snprintf(killStr, 64, "?");
+                            }
+                            strcat(killLine, killStr);
+                            if (j < prop->numKill - 1) strcat(killLine, ", ");
+                        }
+                    }
+                    strcat(killLine, " }");
+                } else {
+                    strcat(killLine, "∅");
+                }
+                printf("║       │     %-81s ║\n", killLine);
+                
+                // Print IN
+                char inLine[256] = "➢ IN: ";
+                if (prop->numIn > 0) {
+                    strcat(inLine, "{ ");
+                    for (int j = 0; j < prop->numIn; j++) {
+                        if (prop->in[j]) {
+                            char inStr[64] = "";
+                            address* addr = prop->in[j];
+                            // Find the line number (index in allAddress)
+                            int lineNum = -1;
+                            for (int k = 0; k < addr_count; k++) {
+                                if (allAddress[k] == addr) {
+                                    lineNum = k + 1; // +1 for 1-based indexing
+                                    break;
+                                }
+                            }
+                            if (lineNum != -1) {
+                                snprintf(inStr, 64, "%d", lineNum);
+                            } else {
+                                snprintf(inStr, 64, "?");
+                            }
+                            strcat(inLine, inStr);
+                            if (j < prop->numIn - 1) strcat(inLine, ", ");
+                        }
+                    }
+                    strcat(inLine, " }");
+                } else {
+                    strcat(inLine, "∅");
+                }
+                printf("║       │     %-81s ║\n", inLine);
+                
+                // Print OUT
+                char outLine[256] = "➢ OUT: ";
+                if (prop->numOut > 0) {
+                    strcat(outLine, "{ ");
+                    for (int j = 0; j < prop->numOut; j++) {
+                        if (prop->out[j]) {
+                            char outStr[64] = "";
+                            address* addr = prop->out[j];
+                            // Find the line number (index in allAddress)
+                            int lineNum = -1;
+                            for (int k = 0; k < addr_count; k++) {
+                                if (allAddress[k] == addr) {
+                                    lineNum = k + 1; // +1 for 1-based indexing
+                                    break;
+                                }
+                            }
+                            if (lineNum != -1) {
+                                snprintf(outStr, 64, "%d", lineNum);
+                            } else {
+                                snprintf(outStr, 64, "?");
+                            }
+                            strcat(outLine, outStr);
+                            if (j < prop->numOut - 1) strcat(outLine, ", ");
+                        }
+                    }
+                    strcat(outLine, " }");
+                } else {
+                    strcat(outLine, "∅");
+                }
+                printf("║       │     %-81s ║\n", outLine);
+            }
+
+            if (i < block_count - 1) {
+                printf("╠═══════╪══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+            }
+        }
+    }
+
+    printf("╠═══════╧══════════════════════════════════════════════════════════════════════════════════════════╣\n");
+    printf("║                                    Total Blocks: %-3d                                            ║\n", block_count);
+    printf("╚══════════════════════════════════════════════════════════════════════════════════════════════════╝\n");
+
+    // Success message
+    printf("\n");
+    printf("╔══════════════════════════════════════════════════════════════════════════════════════════════════╗\n");
+    printf("║                           ✓ BASIC BLOCKS GENERATION SUCCESSFUL                                  ║\n");
+    printf("╠══════════════════════════════════════════════════════════════════════════════════════════════════╣\n");
+    printf("║  Basic blocks have been successfully generated from 3-address code.                             ║\n");
+    printf("║  Total Blocks Generated: %-3d                                                                   ║\n", block_count);
+    printf("║  Status: Ready for Optimization Analysis                                                        ║\n");
     printf("╚══════════════════════════════════════════════════════════════════════════════════════════════════╝\n");
     printf("\n");
 }

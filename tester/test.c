@@ -200,6 +200,7 @@
     z;
 
 
+
     bool done = true;
     if(done){ x = 0; }
 
@@ -215,37 +216,16 @@
     */
 
 int main() {        
+    bool isTrue = true;
 
-    int a = 5;
-int b = 10;
-int sum = 0;
-bool flag = true;
-int arr[5];
+    if(isTrue){
+        int a = 10;
+        a++;
+    } else{
+        int b = 15;
+        b--;
+    }
 
-sum = a + b;
-
-if (a < b) {
-    sum = sum + a;
-} else {
-    sum = sum + b;
-}
-
-int i;
-for (i = 0; i < 5; ++i) {
-    arr[i] = i * 2;
-}
-
-int counter = 0;
-while (counter < 3 && flag) {
-    sum = sum + arr[counter];
-    ++counter;
-}
-
-int result;
-result = sum * 2 + a - b / 2;
-
-bool status;
-status = (result > 20) && flag || (a == b);
-
+    isTrue = !isTrue;
 }
 

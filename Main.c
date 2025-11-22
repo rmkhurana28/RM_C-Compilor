@@ -1,3 +1,5 @@
+// using static emmory allocation mostly everywhere, will use dynamic in next compiler
+
 #include "database.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +33,11 @@ int main(void) {
     startICG();
 
     print3AddressCode();
+
+    startOptimization();
+
+    // Optional: print basic blocks (uncomment to enable)
+    printBlocks();
 
     // generate target code (x86-64 assembly)
     // generateTargetCode();

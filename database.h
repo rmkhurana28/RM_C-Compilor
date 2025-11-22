@@ -13,6 +13,7 @@
 
 #define MAX_NAME 32
 #define MINI_MAX 128
+#define MAX_STATEMENTS 256
 #define MAX 8192
 
 // tokenType enum
@@ -304,6 +305,45 @@ typedef struct address{
     };    
 } address;
 
+// optimizations start from here
+
+// structure for blocks
+typedef struct block{
+    int blockID;
+
+    address* list[MAX];
+    int numberOfAddressesInBlock;
+
+    struct block* cfg_out[MAX];
+    int numCFGOut;
+
+    struct block* cfg_in[MAX];
+    int numCFGIn;
+} block;
+
+// block storage
+extern block* allBlocks[MAX];
+extern int block_count;
+
+// structure for GEN/KILL/IN/OUT
+typedef struct blockProp{
+    address* gen[MAX_STATEMENTS];
+    int numGen;
+
+    address* kill[MAX_STATEMENTS];
+    int numKill;
+
+    address* in[MAX_STATEMENTS];
+    int numIn;
+
+    address* out[MAX_STATEMENTS];
+    int numOut;
+} blockProp;
+
+// storage for GEN/KILL/IN/OUT
+extern blockProp* allBlockProps[MAX];
+extern int block_prop_count;
+
 // Structure for x86-64 assembly instructions
 typedef struct {
     char instruction[256];
@@ -367,6 +407,11 @@ void printSymbolTable();
 // intermediate code generation
 void startICG();
 void print3AddressCode();
+
+void startOptimization();
+
+// print basic blocks (optimization)
+void printBlocks();
 
 // target code generation (x86-64)
 void generateTargetCode();
