@@ -75,3 +75,27 @@ Error code
 [03.26] -> AST is NOT accessible
 [03.27] -> ! NOT allowed in update section of FOR
 [03.28] -> Expectedd either INCREMENTS/DECREMENTS/ASSIGNMENTS statements in update section of for
+
+[04.01] -> AST is NOT accessible or NULL
+[04.02] -> Memory allocation failed for temporary variable
+[04.03] -> Memory allocation failed for label
+[04.04] -> Memory allocation failed for three-address code instruction
+[04.05] -> Maximum limit of three-address code instructions reached
+[04.06] -> Unknown or unsupported AST node type found
+[04.07] -> Invalid operator type in AST node
+
+[05.01] -> Memory allocation failed for basic block
+[05.02] -> Maximum limit of basic blocks reached
+[05.03] -> Memory allocation failed for block properties
+[05.04] -> Block index mismatch during property assignment
+[05.05] -> Memory allocation failed for address pointer array
+[05.06] -> Block not found in block array
+[05.07] -> Invalid block structure detected
+[05.08] -> CFG formation error - label not found
+
+[06.01] -> Memory allocation failed for assembly instruction
+[06.02] -> Assembly buffer is full - maximum instruction limit reached
+[06.03] -> Invalid operand type in three-address code
+[06.04] -> Unknown instruction type during code generation
+[06.05] -> Register allocation failed
+[06.06] -> Invalid operation for target code generation

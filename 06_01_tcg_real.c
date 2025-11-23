@@ -1,33 +1,33 @@
 #include "database.h"
 
-// Structure to map variables to stack offsets
+// structure to map variables to stack offsets
 typedef struct {
     char var_name[MAX_NAME];
-    int stack_offset;       // Offset from %rbp (negative for local vars)
+    int stack_offset;       // offset from %rbp (negative for local vars)
     bool is_array;
-    int array_size;         // Number of elements for arrays
+    int array_size;         // number of elements for arrays
 } VarStackMap;
 
-// Array to store real assembly code
+// storage for generated real assembly code
 AsmInstruction* realAsmCode[MAX];
 int real_asm_count = 0;
 
-// Variable to stack offset mapping
+// variable to stack offset mapping table
 VarStackMap varStackMap[MAX];
 int var_map_count = 0;
-int current_stack_offset = -8; // Start at -8(%rbp)
+int current_stack_offset = -8; // start at -8(%rbp)
 
-// Helper function to add real assembly instruction
+// add real assembly instruction to output array
 void addRealAsmInstruction(const char* instr) {
     if (real_asm_count >= MAX) {
-        printf("Real assembly buffer is full!\n");
-        return;
+        printf("06_01 || Real Target Code Generation error [06_01.01] -> Real assembly buffer is full - maximum instruction limit reached\n");
+        exit(6);
     }
     
     realAsmCode[real_asm_count] = (AsmInstruction*)malloc(sizeof(AsmInstruction));
     if (realAsmCode[real_asm_count] == NULL) {
-        printf("Memory allocation failed for real assembly instruction\n");
-        return;
+        printf("06_01 || Real Target Code Generation error [06_01.02] -> Memory allocation failed for real assembly instruction\n");
+        exit(6);
     }
     
     strncpy(realAsmCode[real_asm_count]->instruction, instr, 255);
@@ -35,11 +35,11 @@ void addRealAsmInstruction(const char* instr) {
     real_asm_count++;
 }
 
-// Check if operand is a number (immediate value)
+// check if string is a numeric value (immediate operand)
 bool isRealNumber(const char* str) {
     if (str == NULL || *str == '\0') return false;
     
-    // Check for "true" or "false"
+    // check for boolean literals
     if (strcmp(str, "true") == 0 || strcmp(str, "false") == 0) return false;
     
     int i = 0;
@@ -63,7 +63,7 @@ bool isRealNumber(const char* str) {
     return hasDigit;
 }
 
-// Check if operand is a temp variable (T0, T1, etc.)
+// check if operand is a temporary variable (T0, T1, etc.)
 bool isRealTempVar(const char* str) {
     if (str == NULL || str[0] != 'T') return false;
     
@@ -73,7 +73,7 @@ bool isRealTempVar(const char* str) {
     return true;
 }
 
-// Check if operand is a label (L0, L1, etc.)
+// check if operand is a label (L0, L1, etc.)
 bool isRealLabel(const char* str) {
     if (str == NULL || str[0] != 'L') return false;
     
@@ -83,19 +83,19 @@ bool isRealLabel(const char* str) {
     return true;
 }
 
-// Get stack offset for a variable or temp
+// get stack offset for a variable or temp (allocate if not found)
 int getStackOffset(const char* var_name) {
-    // Check if already mapped
+    // check if already mapped
     for (int i = 0; i < var_map_count; i++) {
         if (strcmp(varStackMap[i].var_name, var_name) == 0) {
             return varStackMap[i].stack_offset;
         }
     }
     
-    // Not found, create new mapping
+    // not found, create new mapping
     if (var_map_count >= MAX) {
-        printf("Variable stack map is full!\n");
-        return -8; // default fallback
+        printf("06_01 || Real Target Code Generation error [06_01.03] -> Variable stack map is full - maximum variable limit reached\n");
+        exit(6);
     }
     
     VarStackMap* map = &varStackMap[var_map_count];
@@ -104,13 +104,13 @@ int getStackOffset(const char* var_name) {
     map->is_array = false;
     map->array_size = 0;
     
-    // Check if it's an array in symbol table
+    // check if it's an array in symbol table
     for (int i = 0; i < symbol_count; i++) {
         if (strcmp(symbolTable[i]->var_name, var_name) == 0 && symbolTable[i]->isArray) {
             map->is_array = true;
             int arr_size = atoi(symbolTable[i]->arraySize);
             map->array_size = arr_size;
-            // Allocate space for entire array (8 bytes per element)
+            // allocate space for entire array (8 bytes per element)
             map->stack_offset = current_stack_offset;
             current_stack_offset -= (arr_size * 8);
             var_map_count++;
@@ -118,7 +118,7 @@ int getStackOffset(const char* var_name) {
         }
     }
     
-    // Regular variable - allocate 8 bytes
+    // regular variable - allocate 8 bytes
     map->stack_offset = current_stack_offset;
     current_stack_offset -= 8;
     var_map_count++;
@@ -126,33 +126,33 @@ int getStackOffset(const char* var_name) {
     return map->stack_offset;
 }
 
-// Get operand as string (with proper addressing)
+// convert operand to proper x86-64 addressing format
 void getRealOperand(const char* operand, char* output) {
     if (isRealNumber(operand)) {
-        sprintf(output, "$%s", operand);
+        sprintf(output, "$%s", operand); // immediate value
     } else if (strcmp(operand, "true") == 0) {
-        sprintf(output, "$1");
+        sprintf(output, "$1"); // boolean true as 1
     } else if (strcmp(operand, "false") == 0) {
-        sprintf(output, "$0");
+        sprintf(output, "$0"); // boolean false as 0
     } else if (isRealLabel(operand)) {
-        sprintf(output, "%s", operand);
+        sprintf(output, "%s", operand); // label reference
     } else {
-        // Variable or temp - use stack offset
+        // variable or temp - use stack offset
         int offset = getStackOffset(operand);
         sprintf(output, "%d(%%rbp)", offset);
     }
 }
 
-// Build variable stack map from symbol table
+// build variable stack map from symbol table
 void buildVariableStackMap() {
     var_map_count = 0;
     current_stack_offset = -8;
     
-    // First pass: allocate all user variables from symbol table
+    // first pass: allocate all user variables from symbol table
     for (int i = 0; i < symbol_count; i++) {
         symbol* sym = symbolTable[i];
         
-        // Check if already mapped
+        // check if already mapped
         bool already_mapped = false;
         for (int j = 0; j < var_map_count; j++) {
             if (strcmp(varStackMap[j].var_name, sym->var_name) == 0) {
@@ -183,7 +183,7 @@ void buildVariableStackMap() {
     }
 }
 
-// Generate x86-64 prologue
+// generate x86-64 function prologue with correct stack allocation
 void generateRealPrologue() {
     addRealAsmInstruction("    .section .text");
     addRealAsmInstruction("    .globl main");
@@ -193,17 +193,17 @@ void generateRealPrologue() {
     addRealAsmInstruction("    pushq   %rbp");
     addRealAsmInstruction("    movq    %rsp, %rbp");
     
-    // Calculate total stack space needed
-    int total_stack = (-current_stack_offset) + 16; // Add padding
-    total_stack = ((total_stack + 15) / 16) * 16;   // Align to 16 bytes
+    // calculate total stack space needed
+    int total_stack = (-current_stack_offset) + 16; // add padding
+    total_stack = ((total_stack + 15) / 16) * 16;   // align to 16 bytes
     
     char instr[256];
     sprintf(instr, "    subq    $%d, %%rsp    # Allocate stack space", total_stack);
     addRealAsmInstruction(instr);
-    addRealAsmInstruction("");
+    addRealAsmInstruction(""); 
 }
 
-// Generate x86-64 epilogue
+// generate x86-64 function epilogue (cleanup and return)
 void generateRealEpilogue() {
     addRealAsmInstruction("");
     addRealAsmInstruction("    # Function epilogue");
@@ -212,7 +212,7 @@ void generateRealEpilogue() {
     addRealAsmInstruction("    ret");
 }
 
-// Generate assembly for ADDR_ASSIGN: result = arg1
+// generate assembly for simple assignment: result = arg1
 void generateRealAssign(address* addr) {
     char instr[256];
     char src[128], dst[128];
@@ -220,17 +220,17 @@ void generateRealAssign(address* addr) {
     getRealOperand(addr->assign.arg1, src);
     getRealOperand(addr->assign.result, dst);
     
-    // Load source to %rax
+    // load source to %rax
     sprintf(instr, "    movq    %s, %%rax    # %s = %s", 
             src, addr->assign.result, addr->assign.arg1);
     addRealAsmInstruction(instr);
     
-    // Store to destination
+    // store to destination
     sprintf(instr, "    movq    %%rax, %s", dst);
     addRealAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_BINOP: result = arg1 op arg2
+// generate assembly for binary operation: result = arg1 op arg2
 void generateRealBinOp(address* addr) {
     char instr[256];
     char arg1[128], arg2[128], result[128];
@@ -239,16 +239,16 @@ void generateRealBinOp(address* addr) {
     getRealOperand(addr->binop.arg2, arg2);
     getRealOperand(addr->binop.result, result);
     
-    // Comment
+    // comment showing the operation
     sprintf(instr, "    # %s = %s %s %s", 
             addr->binop.result, addr->binop.arg1, addr->binop.op, addr->binop.arg2);
     addRealAsmInstruction(instr);
     
-    // Load first operand to %rax
+    // load first operand to %rax
     sprintf(instr, "    movq    %s, %%rax", arg1);
     addRealAsmInstruction(instr);
     
-    // Perform operation
+    // perform operation
     if (strcmp(addr->binop.op, "+") == 0) {
         sprintf(instr, "    addq    %s, %%rax", arg2);
         addRealAsmInstruction(instr);
@@ -297,12 +297,12 @@ void generateRealBinOp(address* addr) {
         addRealAsmInstruction(instr);
     }
     
-    // Store result
+    // store result
     sprintf(instr, "    movq    %%rax, %s", result);
     addRealAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_UNOP: result = op arg1
+// generate assembly for unary operation: result = op arg1
 void generateRealUnOp(address* addr) {
     char instr[256];
     char arg1[128], result[128];
@@ -314,11 +314,11 @@ void generateRealUnOp(address* addr) {
             addr->unop.result, addr->unop.op, addr->unop.arg1);
     addRealAsmInstruction(instr);
     
-    // Load operand
+    // load operand
     sprintf(instr, "    movq    %s, %%rax", arg1);
     addRealAsmInstruction(instr);
     
-    // Apply unary operation
+    // apply unary operation
     if (strcmp(addr->unop.op, "-") == 0) {
         sprintf(instr, "    negq    %%rax");
     } else if (strcmp(addr->unop.op, "!") == 0) {
@@ -330,19 +330,19 @@ void generateRealUnOp(address* addr) {
     }
     addRealAsmInstruction(instr);
     
-    // Store result
+    // store result
     sprintf(instr, "    movq    %%rax, %s", result);
     addRealAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_GOTO: goto label
+// generate assembly for unconditional jump: goto label
 void generateRealGoto(address* addr) {
     char instr[256];
     sprintf(instr, "    jmp     %s", addr->goto_stmt.target);
     addRealAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_IF_F_GOTO: ifFalse condition goto label
+// generate assembly for conditional jump if false: ifFalse condition goto label
 void generateRealIfFalseGoto(address* addr) {
     char instr[256];
     char condition[128];
@@ -363,7 +363,7 @@ void generateRealIfFalseGoto(address* addr) {
     addRealAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_IF_T_GOTO: ifTrue condition goto label
+// generate assembly for conditional jump if true: ifTrue condition goto label
 void generateRealIfTrueGoto(address* addr) {
     char instr[256];
     char condition[128];
@@ -384,14 +384,14 @@ void generateRealIfTrueGoto(address* addr) {
     addRealAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_LABEL: label:
+// generate assembly for label definition: label:
 void generateRealLabel(address* addr) {
     char instr[256];
     sprintf(instr, "%s:", addr->label.labelNumber);
     addRealAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_ARRAY_READ: result = array[index]
+// generate assembly for array element read: result = array[index]
 void generateRealArrayRead(address* addr) {
     char instr[256];
     char index[128], result[128];
@@ -403,29 +403,29 @@ void generateRealArrayRead(address* addr) {
             addr->array_read.result, addr->array_read.array, addr->array_read.index);
     addRealAsmInstruction(instr);
     
-    // Load index to %rbx
+    // load index to %rbx
     sprintf(instr, "    movq    %s, %%rbx", index);
     addRealAsmInstruction(instr);
     
-    // Scale by 8 (size of each element)
+    // scale by 8 (size of each element)
     sprintf(instr, "    imulq   $8, %%rbx");
     addRealAsmInstruction(instr);
     
-    // Get array base address
+    // get array base address
     int array_offset = getStackOffset(addr->array_read.array);
     sprintf(instr, "    leaq    %d(%%rbp), %%rax", array_offset);
     addRealAsmInstruction(instr);
     
-    // Load array element
+    // load array element
     sprintf(instr, "    movq    (%%rax, %%rbx), %%rax");
     addRealAsmInstruction(instr);
     
-    // Store result
+    // store result
     sprintf(instr, "    movq    %%rax, %s", result);
     addRealAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_ARRAY_WRITE: array[index] = value
+// generate assembly for array element write: array[index] = value
 void generateRealArrayWrite(address* addr) {
     char instr[256];
     char index[128], value[128];
@@ -459,16 +459,16 @@ void generateRealArrayWrite(address* addr) {
     addRealAsmInstruction(instr);
 }
 
-// Main function to generate real target code from 3-address code
+// main function to convert 3-address code to real x86-64 assembly
 void generateRealTargetCode() {
-    // Reset assembly code array
+    // reset assembly code counter
     real_asm_count = 0;
     
-    // Build variable to stack offset mapping
+    // build variable to stack offset mapping
     buildVariableStackMap();
     
-    // PASS 1: Pre-allocate stack space for all temp variables
-    // Process all instructions to discover all temps and allocate their stack space
+    // PASS 1: pre-allocate stack space for all temp variables
+    // process all instructions to discover all temps and allocate their stack space
     for (int i = 0; i < addr_count; i++) {
         address* addr = allAddress[i];
         
@@ -515,7 +515,7 @@ void generateRealTargetCode() {
     // NOW generate prologue with correct stack size
     generateRealPrologue();
     
-    // PASS 2: Generate actual assembly code
+    // PASS 2: generate actual assembly code
     for (int i = 0; i < addr_count; i++) {
         address* addr = allAddress[i];
         
@@ -561,6 +561,6 @@ void generateRealTargetCode() {
         }
     }
     
-    // Generate epilogue
+    // generate epilogue
     generateRealEpilogue();
 }

@@ -58,6 +58,10 @@ char* getLeftSideOfKindOfAssign(address* addr){
 block* generateBlock(int init , int N){
     // allocate memory for block
     block* temp = (block*)malloc(sizeof(block));
+    if(temp == NULL){
+        printf("05 || Optimization error [05.01] -> Memory allocation failed for basic block\n");
+        exit(5);
+    }
 
     // set the ID of block
     temp->blockID = BlockId++;
@@ -73,6 +77,12 @@ block* generateBlock(int init , int N){
     temp->numCFGIn = 0; // initialize number of cfg in=0
     temp->numCFGOut = 0; // initialize number of cfg out=0
 
+    // check if block array is full
+    if(block_count >= MAX){
+        printf("05 || Optimization error [05.02] -> Maximum limit of basic blocks reached\n");
+        exit(5);
+    }
+
     // add block into the block array
     allBlocks[block_count++] = temp;
 
@@ -83,6 +93,10 @@ block* generateBlock(int init , int N){
 address** unionOfAddrAndReturnResult(int n1 , address** addr1 , int n2 , address** addr2){
     // allocate memory for array of address pointores
     address** temp = (address**)malloc(MAX_STATEMENTS * sizeof(address*));
+    if(temp == NULL){
+        printf("05 || Optimization error [05.05] -> Memory allocation failed for address pointer array\n");
+        exit(5);
+    }
     
     // initialize the entire array to NULL for simplicity
     for(int i=0 ; i<MAX_STATEMENTS ; i++){
@@ -136,6 +150,11 @@ address** minusOfTwoAddr(int n1 , address** addr1 , int n2 , address** addr2){
 
     // allocate memory for array of address pointors 
     address** temp = (address**)malloc(MAX_STATEMENTS * sizeof(address*));
+    if(temp == NULL){
+        printf("05 || Optimization error [05.05] -> Memory allocation failed for address pointer array\n");
+        exit(5);
+    }
+    
     // initialize the array to NULL for simplicity
     for(int i=0 ; i<MAX_STATEMENTS ; i++){
         temp[i] = NULL;
@@ -183,12 +202,19 @@ int findIndexOfBlock(block* currBlock){
     }
 
     // current block doesn't exists
+    printf("05 || Optimization error [05.06] -> Block not found in block array\n");
+    exit(5);
     return -1;
 }
 
 blockProp* generateEmptyBlockProp(){
     // generate empty blockProp and return
-    return (blockProp*)malloc(sizeof(blockProp));
+    blockProp* temp = (blockProp*)malloc(sizeof(blockProp));
+    if(temp == NULL){
+        printf("05 || Optimization error [05.03] -> Memory allocation failed for block properties\n");
+        exit(5);
+    }
+    return temp;
 }
 
 void calculateGENForBlockAndStoreTo(block* currBlock , blockProp* currBlockProp){
@@ -441,7 +467,7 @@ void formCFG(){
 void getPropertyOfBlock(int index_of_block , block* currBlock){
     // error in assignment of block-properties
     if(index_of_block != block_prop_count){
-        printf("Error\n");
+        printf("05 || Optimization error [05.04] -> Block index mismatch during property assignment\n");
         exit(5);
     }
     

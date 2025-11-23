@@ -189,22 +189,23 @@ CharLookup charLookup[] = {
     {0, CHAR_UNKNOWN}
 };
 
+// ----- function declarations -----
 void skipTopLines(FILE* fptr);
-
 char* readNext(FILE* fptr);
-
 tokenType getTokenTypeOf(char* temp_name);
 StoreFunc getStoreFunctionOf(char* temp_name , tokenType type);
-
 CharType getCharTypeOf(char c);
 
+// ----- main tokenization function -----
+
+// read source file and generate tokens
 void generateTokens(char* file_name){
     FILE* fptr = NULL; // generate file pointer to read data from
     
     fptr = fopen(file_name,"r"); // open file with read permissions
 
     if(!fptr){ // file name is invalid
-        printf("File [%s] NOT found...\n", file_name);
+        printf("[01.01] -> File [%s] NOT found\n", file_name);
         exit(1);
     }
 
@@ -250,6 +251,7 @@ void generateTokens(char* file_name){
     fclose(fptr); // close the file
 }
 
+// skip preprocessor directives, comments, and lines before main function
 void skipTopLines(FILE* fptr) {
     if (!fptr) return;
 
@@ -284,8 +286,8 @@ void skipTopLines(FILE* fptr) {
                 // if next char is whitespace, continue
                 if (next == ' ' || next == '\t' || next == '\n') continue;
 
-                fprintf(stderr, "Typo in lines above main function...\n");
-                exit(2);
+                printf("[01.02] -> Typo in lines above main function\n");
+                exit(1);
             }
         } 
         // Other characters, just ignore and continue
@@ -295,6 +297,7 @@ void skipTopLines(FILE* fptr) {
     }
 }
 
+// determine token type from lexeme string
 tokenType getTokenTypeOf(char* temp_name){
     // checking if it is int
     int dot_count = 0;
@@ -331,6 +334,7 @@ tokenType getTokenTypeOf(char* temp_name){
     return ID; // default
 }
 
+// get appropriate storage function for token type
 StoreFunc getStoreFunctionOf(char* temp_name , tokenType type){
     
     StoreFunc storeFunc = storeString; // default
@@ -345,6 +349,9 @@ StoreFunc getStoreFunctionOf(char* temp_name , tokenType type){
     return storeFunc;
 }
 
+// ----- token storage functions -----
+
+// store integer token
 void storeInt(tokenType type , char* word){
     Token* temp = (Token*)malloc(sizeof(Token)); // allocate memory for new token
 
@@ -355,8 +362,8 @@ void storeInt(tokenType type , char* word){
 
     // check if tokens array is full
     if(token_count >= MAX){
-        printf("NOT enough space to store tokens..\n");
-        exit(3);
+        printf("[01.03] -> Token buffer is full (MAX limit reached)\n");
+        exit(1);
     }
 
     // add token to the array
@@ -365,7 +372,8 @@ void storeInt(tokenType type , char* word){
     return;
 }
 
-void storeDouble(tokenType type , char* word){ // allocate memory for new token
+// store double token
+void storeDouble(tokenType type , char* word){
     Token* temp = (Token*)malloc(sizeof(Token));
 
     // set the parameters
@@ -374,8 +382,8 @@ void storeDouble(tokenType type , char* word){ // allocate memory for new token
 
     // check if tokens array is full
     if(token_count >= MAX){
-        printf("NOT enough space to store tokens..\n");
-        exit(3);
+        printf("[01.03] -> Token buffer is full (MAX limit reached)\n");
+        exit(1);
     }
 
     // add token to the array
@@ -384,7 +392,8 @@ void storeDouble(tokenType type , char* word){ // allocate memory for new token
     return;
 }
 
-void storeBool(tokenType type , char* word){ // allocate memory for new token
+// store boolean token
+void storeBool(tokenType type , char* word){
     Token* temp = (Token*)malloc(sizeof(Token));
 
     // set the parameters
@@ -395,8 +404,8 @@ void storeBool(tokenType type , char* word){ // allocate memory for new token
     
     // check if tokens array is full
     if(token_count >= MAX){
-        printf("NOT enough space to store tokens..\n");
-        exit(3);
+        printf("[01.03] -> Token buffer is full (MAX limit reached)\n");
+        exit(1);
     }
 
     // add token to the array
@@ -405,7 +414,8 @@ void storeBool(tokenType type , char* word){ // allocate memory for new token
     return;
 }
 
-void storeString(tokenType type , char* word){ // allocate memory for new token
+// store string/identifier/keyword token
+void storeString(tokenType type , char* word){
     Token* temp = (Token*)malloc(sizeof(Token));
 
     // set the parameters
@@ -414,8 +424,8 @@ void storeString(tokenType type , char* word){ // allocate memory for new token
 
     // check if tokens array is full
     if(token_count >= MAX){
-        printf("NOT enough space to store tokens..\n");
-        exit(3);
+        printf("[01.03] -> Token buffer is full (MAX limit reached)\n");
+        exit(1);
     }
 
     // add token to the array
@@ -424,6 +434,7 @@ void storeString(tokenType type , char* word){ // allocate memory for new token
     return;
 }
 
+// get character category from lookup table
 CharType getCharTypeOf(char c){
     for(int i=0 ; charLookup[i].c != 0 ; i++){
         if(c == charLookup[i].c) return charLookup[i].type;
@@ -432,6 +443,7 @@ CharType getCharTypeOf(char c){
     return CHAR_UNKNOWN;
 }
 
+// read next token from file (handles strings, chars, operators, identifiers)
 char* readNext(FILE* fptr){
     char c = fgetc(fptr);
 
@@ -460,8 +472,8 @@ char* readNext(FILE* fptr){
             c = fgetc(fptr);
         }
         if(c == EOF){
-            printf("syntax error..\n");
-            exit(4);
+            printf("[01.04] -> Unterminated character literal\n");
+            exit(1);
         }
         temp_name[temp_name_count++] = c;
         temp_name[temp_name_count] = '\0';
@@ -474,8 +486,8 @@ char* readNext(FILE* fptr){
             c = fgetc(fptr);
         }
         if(c == EOF){
-            printf("syntax error..\n");
-            exit(4);
+            printf("[01.05] -> Unterminated string literal\n");
+            exit(1);
         }
         temp_name[temp_name_count++] = c;
         temp_name[temp_name_count] = '\0';

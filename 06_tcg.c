@@ -1,20 +1,20 @@
 #include "database.h"
 
-// Array to store generated assembly code
+// storage for generated assembly code
 AsmInstruction* asmCode[MAX];
 int asm_count = 0;
 
-// Helper function to add assembly instruction
+// add assembly instruction to output array
 void addAsmInstruction(const char* instr) {
     if (asm_count >= MAX) {
-        printf("Assembly buffer is full!\n");
-        return;
+        printf("06 || Target Code Generation error [06.02] -> Assembly buffer is full - maximum instruction limit reached\n");
+        exit(6);
     }
     
     asmCode[asm_count] = (AsmInstruction*)malloc(sizeof(AsmInstruction));
     if (asmCode[asm_count] == NULL) {
-        printf("Memory allocation failed for assembly instruction\n");
-        return;
+        printf("06 || Target Code Generation error [06.01] -> Memory allocation failed for assembly instruction\n");
+        exit(6);
     }
     
     strncpy(asmCode[asm_count]->instruction, instr, 255);
@@ -22,7 +22,7 @@ void addAsmInstruction(const char* instr) {
     asm_count++;
 }
 
-// Check if operand is a number (immediate value)
+// check if string is a numeric value (immediate operand)
 bool isNumber(const char* str) {
     if (str == NULL || *str == '\0') return false;
     
@@ -47,7 +47,7 @@ bool isNumber(const char* str) {
     return hasDigit;
 }
 
-// Check if operand is a temp variable (T0, T1, etc.)
+// check if operand is a temporary variable (T0, T1, etc.)
 bool isTempVar(const char* str) {
     if (str == NULL || str[0] != 'T') return false;
     
@@ -57,7 +57,7 @@ bool isTempVar(const char* str) {
     return true;
 }
 
-// Check if operand is a label (L0, L1, etc.)
+// check if operand is a label (L0, L1, etc.)
 bool isLabel(const char* str) {
     if (str == NULL || str[0] != 'L') return false;
     
@@ -67,21 +67,18 @@ bool isLabel(const char* str) {
     return true;
 }
 
-// Get register name for a variable/temp
-// Using a simple mapping: user variables to stack, temps to registers
+// map operand to x86-64 location (register/memory/immediate)
 void getOperandLocation(const char* operand, char* location) {
     if (isNumber(operand)) {
-        sprintf(location, "$%s", operand);
+        sprintf(location, "$%s", operand); // immediate value
     } else if (isTempVar(operand)) {
-        // Map temp variables to registers (simplified approach)
-        sprintf(location, "%%%s", operand);
+        sprintf(location, "%%%s", operand); // temp variables to registers
     } else {
-        // User variables are on stack
-        sprintf(location, "%s(%%rbp)", operand);
+        sprintf(location, "%s(%%rbp)", operand); // user variables on stack
     }
 }
 
-// Convert operator string to x86-64 instruction
+// convert 3-address code operator to x86-64 instruction mnemonic
 const char* getAsmOp(const char* op) {
     if (strcmp(op, "+") == 0) return "addq";
     if (strcmp(op, "-") == 0) return "subq";
@@ -98,7 +95,7 @@ const char* getAsmOp(const char* op) {
     return "movq";
 }
 
-// Generate x86-64 prologue
+// generate x86-64 function prologue (setup stack frame)
 void generatePrologue() {
     addAsmInstruction(".section .text");
     addAsmInstruction(".globl main");
@@ -110,7 +107,7 @@ void generatePrologue() {
     addAsmInstruction("");
 }
 
-// Generate x86-64 epilogue
+// generate x86-64 function epilogue (cleanup and return)
 void generateEpilogue() {
     addAsmInstruction("");
     addAsmInstruction("    # Function epilogue");
@@ -120,7 +117,7 @@ void generateEpilogue() {
     addAsmInstruction("    ret");
 }
 
-// Generate assembly for ADDR_ASSIGN: result = arg1
+// generate assembly for simple assignment: result = arg1
 void generateAssign(address* addr) {
     char instr[256];
     char src[128], dst[128];
@@ -144,7 +141,7 @@ void generateAssign(address* addr) {
     addAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_BINOP: result = arg1 op arg2
+// generate assembly for binary operation: result = arg1 op arg2
 void generateBinOp(address* addr) {
     char instr[256];
     
@@ -243,7 +240,7 @@ void generateBinOp(address* addr) {
     addAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_UNOP: result = op arg1
+// generate assembly for unary operation: result = op arg1
 void generateUnOp(address* addr) {
     char instr[256];
     
@@ -278,14 +275,14 @@ void generateUnOp(address* addr) {
     addAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_GOTO: goto label
+// generate assembly for unconditional jump: goto label
 void generateGoto(address* addr) {
     char instr[256];
     sprintf(instr, "    jmp     %s", addr->goto_stmt.target);
     addAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_IF_F_GOTO: ifFalse condition goto label
+// generate assembly for conditional jump if false: ifFalse condition goto label
 void generateIfFalseGoto(address* addr) {
     char instr[256];
     
@@ -309,7 +306,7 @@ void generateIfFalseGoto(address* addr) {
     addAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_IF_T_GOTO: ifTrue condition goto label
+// generate assembly for conditional jump if true: ifTrue condition goto label
 void generateIfTrueGoto(address* addr) {
     char instr[256];
     
@@ -333,14 +330,14 @@ void generateIfTrueGoto(address* addr) {
     addAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_LABEL: label:
+// generate assembly for label definition: label:
 void generateLabel(address* addr) {
     char instr[256];
     sprintf(instr, "%s:", addr->label.labelNumber);
     addAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_ARRAY_READ: result = array[index]
+// generate assembly for array element read: result = array[index]
 void generateArrayRead(address* addr) {
     char instr[256];
     
@@ -373,7 +370,7 @@ void generateArrayRead(address* addr) {
     addAsmInstruction(instr);
 }
 
-// Generate assembly for ADDR_ARRAY_WRITE: array[index] = value
+// generate assembly for array element write: array[index] = value
 void generateArrayWrite(address* addr) {
     char instr[256];
     
@@ -410,15 +407,15 @@ void generateArrayWrite(address* addr) {
     addAsmInstruction(instr);
 }
 
-// Main function to generate target code from 3-address code
+// main function to convert 3-address code to x86-64 assembly
 void generateTargetCode() {
-    // Reset assembly code array
+    // reset assembly code counter
     asm_count = 0;
     
-    // Generate prologue
+    // add function prologue
     generatePrologue();
     
-    // Process each 3-address instruction
+    // convert each 3-address instruction to assembly
     for (int i = 0; i < addr_count; i++) {
         address* addr = allAddress[i];
         
@@ -464,6 +461,6 @@ void generateTargetCode() {
         }
     }
     
-    // Generate epilogue
+    // add function epilogue
     generateEpilogue();
 }

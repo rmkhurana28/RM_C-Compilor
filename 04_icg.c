@@ -7,6 +7,10 @@ int labels_used = 0;
 // generate temp variables like t0 , t1 , t2 ...
 char* generateNewAddrResult(){
     char* temp = (char*)malloc(16*sizeof(char)); //  allocated new memory;
+    if(temp == NULL){
+        printf("04 || ICG error [04.02] -> Memory allocation failed for temporary variable\n");
+        exit(4);
+    }
 
     sprintf(temp , "T%d", temp_var_used++);
 
@@ -16,13 +20,17 @@ char* generateNewAddrResult(){
 // generate labels like L0 , L1 , L2 ...
 char* generateNewAddrLabel(){
     char* temp = (char*)malloc(16*sizeof(char)); //  allocated new memory;
+    if(temp == NULL){
+        printf("04 || ICG error [04.03] -> Memory allocation failed for label\n");
+        exit(4);
+    }
 
     sprintf(temp , "L%d", labels_used++);
 
     return temp;
 }
 
-// get result temp variable whenever needed
+// extract result variable from 3-address code instruction
 char* getVariableName(address* addr){
     if(addr->type == ADDR_ASSIGN){
         return addr->assign.result;
@@ -35,10 +43,10 @@ char* getVariableName(address* addr){
     } else if(addr->type == ADDR_ARRAY_WRITE){
         return addr->array_write.array;
     }
-    return NULL; // For other types, there is no result variable
+    return NULL; // for other types, there is no result variable
 }
 
-// Convert tokenType operator to string
+// convert tokenType operator to string for 3-address code
 char* opToString(tokenType op) {
     switch(op) {
         // Arithmetic operators
@@ -71,11 +79,19 @@ char* opToString(tokenType op) {
     }
 }
 
-// helper functions to generate 3-address code objects
+// ----- helper functions to generate 3-address code objects -----
 
-// Generate: result = arg1
+// generate assignment: result = arg1
 address* genAssign(const char* result, const char* arg1) {
     address* temp = (address*)malloc(sizeof(address));
+    if(temp == NULL){
+        printf("04 || ICG error [04.04] -> Memory allocation failed for three-address code instruction\n");
+        exit(4);
+    }
+    if(addr_count >= MAX){
+        printf("04 || ICG error [04.05] -> Maximum limit of three-address code instructions reached\n");
+        exit(4);
+    }
     temp->type = ADDR_ASSIGN;
     strcpy(temp->assign.result, result);
     strcpy(temp->assign.arg1, arg1);
@@ -84,9 +100,17 @@ address* genAssign(const char* result, const char* arg1) {
     return temp;
 }
 
-// Generate: result = arg1 op arg2
+// generate binary operation: result = arg1 op arg2
 address* genBinOp(const char* result, const char* arg1, const char* op, const char* arg2) {
     address* temp = (address*)malloc(sizeof(address));
+    if(temp == NULL){
+        printf("04 || ICG error [04.04] -> Memory allocation failed for three-address code instruction\n");
+        exit(4);
+    }
+    if(addr_count >= MAX){
+        printf("04 || ICG error [04.05] -> Maximum limit of three-address code instructions reached\n");
+        exit(4);
+    }
     temp->type = ADDR_BINOP;
     strcpy(temp->binop.result, result);
     strcpy(temp->binop.arg1, arg1);
@@ -97,9 +121,17 @@ address* genBinOp(const char* result, const char* arg1, const char* op, const ch
     return temp;
 }
 
-// Generate: result = op arg1
+// generate unary operation: result = op arg1
 address* genUnOp(const char* result, const char* op, const char* arg1) {
     address* temp = (address*)malloc(sizeof(address));
+    if(temp == NULL){
+        printf("04 || ICG error [04.04] -> Memory allocation failed for three-address code instruction\n");
+        exit(4);
+    }
+    if(addr_count >= MAX){
+        printf("04 || ICG error [04.05] -> Maximum limit of three-address code instructions reached\n");
+        exit(4);
+    }
     temp->type = ADDR_UNOP;
     strcpy(temp->unop.result, result);
     strcpy(temp->unop.op, op);
@@ -109,9 +141,17 @@ address* genUnOp(const char* result, const char* op, const char* arg1) {
     return temp;
 }
 
-// Generate: goto label
+// generate unconditional jump: goto label
 address* genGoto(const char* label) {
     address* temp = (address*)malloc(sizeof(address));
+    if(temp == NULL){
+        printf("04 || ICG error [04.04] -> Memory allocation failed for three-address code instruction\n");
+        exit(4);
+    }
+    if(addr_count >= MAX){
+        printf("04 || ICG error [04.05] -> Maximum limit of three-address code instructions reached\n");
+        exit(4);
+    }
     temp->type = ADDR_GOTO;
     strcpy(temp->goto_stmt.target, label);
     
@@ -119,9 +159,17 @@ address* genGoto(const char* label) {
     return temp;
 }
 
-// Generate: ifFalse condition goto label
+// generate conditional jump if false: ifFalse condition goto label
 address* genIfFalseGoto(const char* condition, const char* label) {
     address* temp = (address*)malloc(sizeof(address));
+    if(temp == NULL){
+        printf("04 || ICG error [04.04] -> Memory allocation failed for three-address code instruction\n");
+        exit(4);
+    }
+    if(addr_count >= MAX){
+        printf("04 || ICG error [04.05] -> Maximum limit of three-address code instructions reached\n");
+        exit(4);
+    }
     temp->type = ADDR_IF_F_GOTO;
     strcpy(temp->if_false.condition, condition);
     strcpy(temp->if_false.target, label);
@@ -130,9 +178,17 @@ address* genIfFalseGoto(const char* condition, const char* label) {
     return temp;
 }
 
-// Generate: ifTrue condition goto label
+// generate conditional jump if true: ifTrue condition goto label
 address* genIfTrueGoto(const char* condition, const char* label) {
     address* temp = (address*)malloc(sizeof(address));
+    if(temp == NULL){
+        printf("04 || ICG error [04.04] -> Memory allocation failed for three-address code instruction\n");
+        exit(4);
+    }
+    if(addr_count >= MAX){
+        printf("04 || ICG error [04.05] -> Maximum limit of three-address code instructions reached\n");
+        exit(4);
+    }
     temp->type = ADDR_IF_T_GOTO;
     strcpy(temp->if_true.condition, condition);
     strcpy(temp->if_true.target, label);
@@ -141,9 +197,17 @@ address* genIfTrueGoto(const char* condition, const char* label) {
     return temp;
 }
 
-// Generate: L1:
+// generate label: L1:
 address* genLabel(const char* label) {
     address* temp = (address*)malloc(sizeof(address));
+    if(temp == NULL){
+        printf("04 || ICG error [04.04] -> Memory allocation failed for three-address code instruction\n");
+        exit(4);
+    }
+    if(addr_count >= MAX){
+        printf("04 || ICG error [04.05] -> Maximum limit of three-address code instructions reached\n");
+        exit(4);
+    }
     temp->type = ADDR_LABEL;
     strcpy(temp->label.labelNumber, label);
     
@@ -151,9 +215,17 @@ address* genLabel(const char* label) {
     return temp;
 }
 
-// Generate: result = array[index]
+// generate array read: result = array[index]
 address* genArrayRead(const char* result, const char* array, const char* index) {
     address* temp = (address*)malloc(sizeof(address));
+    if(temp == NULL){
+        printf("04 || ICG error [04.04] -> Memory allocation failed for three-address code instruction\n");
+        exit(4);
+    }
+    if(addr_count >= MAX){
+        printf("04 || ICG error [04.05] -> Maximum limit of three-address code instructions reached\n");
+        exit(4);
+    }
     temp->type = ADDR_ARRAY_READ;
     strcpy(temp->array_read.result, result);
     strcpy(temp->array_read.array, array);
@@ -163,9 +235,17 @@ address* genArrayRead(const char* result, const char* array, const char* index) 
     return temp;
 }
 
-// Generate: array[index] = value
+// generate array write: array[index] = value
 address* genArrayWrite(const char* array, const char* index, const char* value) {
     address* temp = (address*)malloc(sizeof(address));
+    if(temp == NULL){
+        printf("04 || ICG error [04.04] -> Memory allocation failed for three-address code instruction\n");
+        exit(4);
+    }
+    if(addr_count >= MAX){
+        printf("04 || ICG error [04.05] -> Maximum limit of three-address code instructions reached\n");
+        exit(4);
+    }
     temp->type = ADDR_ARRAY_WRITE;
     strcpy(temp->array_write.array, array);
     strcpy(temp->array_write.index, index);
@@ -177,68 +257,69 @@ address* genArrayWrite(const char* array, const char* index, const char* value) 
 
 address* genAddr(ASTNode* top);
 
-// generate 3-address code of decl node
+// ----- handler functions for different AST node types -----
+
+// handle variable declaration and array initialization
 address* handleDeclNodes(ASTNode* top){
     address* expr = genAddr(top->decl.init_expr);
     
-    if(top->decl.is_array){
+    if(top->decl.is_array){ // array initialization
         char value[MAX_NAME];
         sprintf(value , "%c" , top->decl.array_size);
         address* index = genAssign(generateNewAddrResult() , value);
         return genArrayWrite(top->decl.var_name , getVariableName(index) , getVariableName(expr));
-    } else{
+    } else{ // simple variable assignment
         return genAssign(top->decl.var_name , getVariableName(expr));
     }
 }
 
-// generate 3-address code of assign node
+// handle assignment statements for variables and arrays
 address* handleAssignNodes(ASTNode* top){    
     address* expr = genAddr(top->assign.expr);
 
-    if(top->assign.var->type == AST_VAR){ // single variable assignment
+    if(top->assign.var->type == AST_VAR){ // simple variable assignment: x = expr
         return genAssign(top->assign.var->var.var_name , getVariableName(expr));
-    } else if(top->assign.var->type == AST_ARRAY_ACCESS){
+    } else if(top->assign.var->type == AST_ARRAY_ACCESS){ // array element assignment: arr[i] = expr
         address* index = genAddr(top->assign.var->array_access.sizeExpr);
         return genArrayWrite(top->assign.var->array_access.array_name , getVariableName(index) , getVariableName(expr));
     }
 
 }
 
-// generate 3-address code of binary operation node
+// handle binary operations like +, -, *, /, <, >, ==, etc.
 address* handleBinOpNodes(ASTNode* top){
     address* left = genAddr(top->binop.left);
     address* right = genAddr(top->binop.right);
     
-    return genBinOp(generateNewAddrResult(), getVariableName(left), opToString(top->binop.op), getVariableName(right)); // generate t2 = t1 + t0
+    return genBinOp(generateNewAddrResult(), getVariableName(left), opToString(top->binop.op), getVariableName(right)); // t2 = t1 op t0
 }
 
-// generate 3-address code of unary operation node
+// handle unary operations like !, ++, --
 address* handleUnOpNodes(ASTNode* top){
     address* var = genAddr(top->unop.expr);
 
-    // return var;
-    if(top->unop.op == OP_NOT){ // !var
+    if(top->unop.op == OP_NOT){ // !var - logical not
         return genUnOp(generateNewAddrResult() , opToString(top->unop.op) , getVariableName(var));
-    } else { // ++ or --
-        if(top->unop.isPrefix){ // ++var or --var
+    } else { // ++ or -- operations
+        if(top->unop.isPrefix){ // ++var or --var (prefix)
             address* help = genAssign(generateNewAddrResult() , getVariableName(var));
             help = genBinOp(generateNewAddrResult() , getVariableName(help) , opToString(top->unop.op) , "1");
-            if(top->unop.expr->type == AST_ARRAY_ACCESS){ // array
-                address* index = genAddr(top->unop.expr->array_access.sizeExpr); // index
+            if(top->unop.expr->type == AST_ARRAY_ACCESS){ // array element
+                address* index = genAddr(top->unop.expr->array_access.sizeExpr);
                 address* helper = genArrayWrite(top->unop.expr->array_access.array_name , getVariableName(index) , getVariableName(help));
                 return genAssign(generateNewAddrResult() , getVariableName(help));
-            } else{ // variable
+            } else{ // simple variable
                 genAssign(top->unop.expr->var.var_name , getVariableName(help));
                 return genAssign(generateNewAddrResult() , top->unop.expr->var.var_name);
             }
-        } else{ // var++ or var--
+        } else{ // var++ or var-- (postfix)
             address* help = genAssign(generateNewAddrResult() , getVariableName(var));
             address* spec = genBinOp(generateNewAddrResult() , getVariableName(help) , opToString(top->unop.op) , "1");
-            if(top->unop.expr->type == AST_ARRAY_ACCESS){
-                address* index = genAddr(top->unop.expr->array_access.sizeExpr); // index
+            if(top->unop.expr->type == AST_ARRAY_ACCESS){ // array element
+                address* index = genAddr(top->unop.expr->array_access.sizeExpr);
                 address* helper = genArrayWrite(top->unop.expr->array_access.array_name , getVariableName(index) , getVariableName(spec));
                 return genAssign(generateNewAddrResult() , getVariableName(help));
-            } else{
+            } else{ // simple variable
                 genAssign(top->unop.expr->var.var_name , getVariableName(spec));
                 return genAssign(generateNewAddrResult() , getVariableName(help));
             }
@@ -246,148 +327,157 @@ address* handleUnOpNodes(ASTNode* top){
     }
 }
 
-// generate 3-address code of IF node
+// handle IF statement: if(condition) then_branch
 address* handleIfNode(ASTNode* top){
     address* cond = genAddr(top->if_stmt.condition);
 
     char* temp_label = generateNewAddrLabel();
     
-    genIfFalseGoto(getVariableName(cond) , temp_label);
+    genIfFalseGoto(getVariableName(cond) , temp_label); // jump to label if condition is false
 
+    // generate code for then branch
     for(int i=0 ; i<top->if_stmt.then_branch->block.statement_count ; i++){
         genAddr(top->if_stmt.then_branch->block.statements[i]);
     }
 
-    genLabel(temp_label);
+    genLabel(temp_label); // label after if block
 
     return NULL;
 }
 
-// generate 3-address code fo IF-ELSE node
+// handle IF-ELSE statement: if(condition) then_branch else else_branch
 address* handleIfElseNode(ASTNode* top){
     address* cond = genAddr(top->if_else_stmt.condition);
 
     char* temp_label = generateNewAddrLabel();
     
-    genIfFalseGoto(getVariableName(cond) , temp_label);
+    genIfFalseGoto(getVariableName(cond) , temp_label); // jump to else block if condition is false
 
+    // generate code for then branch
     for(int i=0 ; i<top->if_else_stmt.then_branch->block.statement_count ; i++){
         genAddr(top->if_else_stmt.then_branch->block.statements[i]);
     }
 
     char* temp_label_2 = generateNewAddrLabel();
 
-    genGoto(temp_label_2);
+    genGoto(temp_label_2); // skip else block after then block
 
-    genLabel(temp_label);
+    genLabel(temp_label); // start of else block
 
+    // generate code for else branch
     for(int i=0 ; i<top->if_else_stmt.else_branch->block.statement_count ; i++){
         genAddr(top->if_else_stmt.else_branch->block.statements[i]);
     }
 
-    genLabel(temp_label_2);
+    genLabel(temp_label_2); // label after if-else block
 }
 
-// generate 3-address code fo WHILE node
+// handle WHILE loop: while(condition) body
 address* handleWhileNode(ASTNode* top){
 
     char* temp_label_2 = generateNewAddrLabel();
 
-    genLabel(temp_label_2);
+    genLabel(temp_label_2); // start of while loop
 
     address* cond = genAddr(top->if_stmt.condition);
 
     char* temp_label = generateNewAddrLabel();
 
-    genIfFalseGoto(getVariableName(cond) , temp_label);
+    genIfFalseGoto(getVariableName(cond) , temp_label); // exit loop if condition is false
 
+    // generate code for loop body
     for(int i=0 ; i<top->while_stmt.body->block.statement_count ; i++){
         genAddr(top->while_stmt.body->block.statements[i]);
     }
 
-    genGoto(temp_label_2);
-    genLabel(temp_label);
+    genGoto(temp_label_2); // jump back to condition check
+    genLabel(temp_label); // label after while loop
 }
 
-// generate 3-address code fo FOR node
+// handle FOR loop: for(init; condition; update) body
 address* handleForNode(ASTNode* top){
-    address* init = genAddr(top->for_stmt.init);
+    address* init = genAddr(top->for_stmt.init); // initialization
 
     char* temp_label = generateNewAddrLabel();
 
-    genLabel(temp_label);
+    genLabel(temp_label); // start of for loop
 
     address* cond = genAddr(top->for_stmt.condition);
 
     char* temp_label_2 = generateNewAddrLabel();
 
-    genIfFalseGoto(getVariableName(cond) , temp_label_2);
+    genIfFalseGoto(getVariableName(cond) , temp_label_2); // exit loop if condition is false
 
+    // generate code for loop body
     for(int i=0 ; i<top->for_stmt.body->block.statement_count ; i++){
         genAddr(top->for_stmt.body->block.statements[i]);
     }
 
-    address* update = genAddr(top->for_stmt.update);
+    address* update = genAddr(top->for_stmt.update); // update expression
 
-    genGoto(temp_label);
+    genGoto(temp_label); // jump back to condition check
 
-    genLabel(temp_label_2);
+    genLabel(temp_label_2); // label after for loop
 }
 
+// main function to generate 3-address code from AST nodes
 address* genAddr(ASTNode* top){
+
+    if(top == NULL){
+        printf("04 || ICG error [04.01] -> AST is NOT accessible or NULL\n");
+        exit(4);
+    }
 
     char value[MAX_NAME];
 
-    if(top->type == AST_NUM){
+    // handle literal values
+    if(top->type == AST_NUM){ // integer literal
         sprintf(value , "%d" , top->int_value);
         return genAssign(generateNewAddrResult() , value);
-    } else if(top->type == AST_DOUBLE){
+    } else if(top->type == AST_DOUBLE){ // floating point literal
         sprintf(value , "%f" , top->double_value);
         return genAssign(generateNewAddrResult() , value);
-    } else if(top->type == AST_BOOL){
-        // sprintf(value , "%d" , top->bool_value ? : "true" , "false");
+    } else if(top->type == AST_BOOL){ // boolean literal
         if(top->bool_value){
             strcpy(value , "true");
         } else{
             strcpy(value , "false");
         }
         return genAssign(generateNewAddrResult() , value);
-    } else if(top->type == AST_CHAR){    
+    } else if(top->type == AST_CHAR){ // character literal
         sprintf(value , "%c" , top->char_value);
         return genAssign(generateNewAddrResult() , value);
-    } else if(top->type == AST_VAR){
+    } else if(top->type == AST_VAR){ // variable access
         return genAssign(generateNewAddrResult() , top->var.var_name);
-    } else if(top->type == AST_ARRAY_ACCESS){ // array read
+    } else if(top->type == AST_ARRAY_ACCESS){ // array element access
         address* index = genAddr(top->array_access.sizeExpr);
-        // address* result = genAssign(top->array_access.array_name , getVariableName(index));
-
-        // return result;
         return genArrayRead( generateNewAddrResult() , top->array_access.array_name , getVariableName(index));
-    } else if(top->type == AST_DECL){
+    } else if(top->type == AST_DECL){ // variable declaration
         if(!top->decl.init_expr) return NULL;
 
         return handleDeclNodes(top);
         
-    } else if(top->type == AST_ASSIGN){
+    } else if(top->type == AST_ASSIGN){ // assignment statement
         return handleAssignNodes(top);        
-    } else if(top->type == AST_BINOP){
+    } else if(top->type == AST_BINOP){ // binary operation
         return handleBinOpNodes(top);   
-    } else if(top->type == AST_UNOP){
+    } else if(top->type == AST_UNOP){ // unary operation
         return handleUnOpNodes(top);        
-    } else if(top->type == AST_IF){
+    } else if(top->type == AST_IF){ // if statement
         return handleIfNode(top);
-    } else if(top->type == AST_IF_ELSE){
+    } else if(top->type == AST_IF_ELSE){ // if-else statement
         return handleIfElseNode(top);
-    } else if(top->type == AST_FOR){
+    } else if(top->type == AST_FOR){ // for loop
         return handleForNode(top);
-    } else if(top->type == AST_WHILE){
+    } else if(top->type == AST_WHILE){ // while loop
         return handleWhileNode(top);
     }
     
     return NULL;
 }
 
-void startICG(){ // Called from main
+// start intermediate code generation for all AST nodes
+void startICG(){ // called from main
     for(int i=0 ; i<ast_count-1 ; i++){
         genAddr(all_ast[i]);
     }

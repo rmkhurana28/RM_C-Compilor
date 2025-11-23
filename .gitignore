@@ -1,0 +1,64 @@
+# Compiled binaries
+Main
+*.out
+*.exe
+
+# Object files
+*.o
+*.obj
+
+# Assembly output files
+*.s
+*.asm
+output.s
+output.asm
+
+# Core dumps
+core
+core.*
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Test output files
+tester/*.s
+tester/*.asm
+tester/*.out
+tester/test
+tester/Main
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Generated documentation
+docs/generated/
+
+# Dependencies
+*.d
+
+# Static libraries
+*.a
+*.lib
+
+# Shared libraries
+*.so
+*.dll
+*.dylib

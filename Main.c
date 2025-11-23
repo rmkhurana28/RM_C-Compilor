@@ -44,8 +44,8 @@ int main(void) {
     // printTargetCode();
 
     // generate real target code (fully assemblable x86-64)
-    // generateRealTargetCode();
-    // printRealTargetCode();
+    generateRealTargetCode();
+    printRealTargetCode();
 
     exit(0);
 }
