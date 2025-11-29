@@ -1,37 +1,65 @@
-# RM Compiler – Level-2 C Compiler (Built in C)
+# RMc4 Compiler – A Complete C Compiler Implementation
 
-### 🧠 What This Compiler Supports
+<div align="center">
 
-- Variable declarations (`int`, `double`, `bool`, `char`, arrays)
-- Expressions (arithmetic, logical, relational)
-- Assignment statements
-- Conditional statements (`if`, `else`)
-- Looping constructs (`while`, `for`)
-- Array access and initialization
-- Abstract Syntax Tree (AST) generation and visualization
-- Three-Address Code (TAC) generation
-- Control Flow Graph (CFG) and basic block formation
-- Code optimization techniques
-- Error reporting with descriptive error codes
+![Compiler](https://img.shields.io/badge/Language-C-blue.svg)   
+![License](https://img.shields.io/badge/License-Educational-green.svg)
+![Platform](https://img.shields.io/badge/Platform-Linux-orange.svg)
+
+**A full-featured, multi-phase compiler built from scratch in C**
+
+**RMc4** = **RM** (Ridham Khurana) + **c4** (Level-4 Compiler)
+
+</div>
 
 ---
 
 ## 📖 Overview
 
-The **RM Compiler** is a fully functional **Level-2 C Compiler** implemented in the **C language**.  
+The **RMc4 Compiler** is a complete Level-4 compiler implementation for a C-like language, built entirely in C. The name **RMc4** represents **RM** (the author, Ridham Khurana) and **c4** (signifying a Level-4 C Compiler). This project demonstrates all major phases of compilation, from lexical analysis to x86-64 code generation, with particular emphasis on code optimization techniques.
 
-It is **under advanced development**, designed to evolve into a complete and modular compiler capable of handling multiple phases of the compilation process.
+### 🎯 Key Features
 
-It performs all major phases of compilation, including:
+- ✅ **Complete Compilation Pipeline** – All phases from tokenization to target code generation
+- 🔍 **Lexical Analysis** – Robust tokenizer with keyword, operator, and literal recognition
+- 🌳 **Syntax Analysis** – Recursive descent parser generating Abstract Syntax Trees
+- 🔬 **Semantic Analysis** – Type checking, scope validation, and symbol table management
+- 📊 **Intermediate Code Generation** – Three-address code (TAC) generation
+- ⚡ **Code Optimization** – CFG construction, basic blocks, data flow analysis, constant folding, dead code elimination
+- 🎯 **Target Code Generation** – Real x86-64 assembly output
+- 📝 **Comprehensive Error Reporting** – Detailed error codes with context information
+- 🧪 **Extensive Test Suite** – 40+ valid test cases, 25+ invalid test cases
 
-- **Lexical Analysis** – Tokenizes source code into meaningful symbols  
-- **Syntax Analysis (Parsing)** – Builds a structured parse tree  
-- **Semantic Analysis** – Validates types and variable declarations  
-- **Intermediate Code Generation** – Produces three-address code (TAC)  
-- **Code Optimization** – Optimizes intermediate representations for efficiency  
-- **Target Code Generation** – Generates low-level executable instructions  
+---
 
-The compiler is designed with a **modular architecture**, ensuring that each phase (lexer, parser, semantic analyzer, code generator, and optimizer) is cleanly separated for clarity and extensibility.
+## 🧠 Supported Language Features
+
+### Data Types
+- `int` – Integer values
+- `double` – Floating-point values
+- `bool` – Boolean values (true/false)
+- `char` – Character values
+- Arrays of all types (with initialization support)
+
+### Operators
+- **Arithmetic:** `+`, `-`, `*`, `/`
+- **Relational:** `<`, `>`, `<=`, `>=`, `==`, `!=`
+- **Logical:** `&&`, `||`, `!`
+- **Unary:** `++`, `--` (both prefix and postfix)
+- **Assignment:** `=`
+
+### Control Structures
+- `if` / `else` statements
+- `while` loops
+- `for` loops
+- Nested control structures
+
+### Other Features
+- Variable declarations with optional initialization
+- Array declarations and initializations
+- Array element access and modification
+- Expression evaluation with correct operator precedence
+- Compound statements (blocks)
 
 ---
 
@@ -40,222 +68,398 @@ The compiler is designed with a **modular architecture**, ensuring that each pha
 ### Prerequisites
 
 - **GCC** or any C compiler
+- **GNU Make** (optional, for automated builds)
 - **Linux/Unix** environment (tested on Fedora/Ubuntu)
-- **Make** (optional, for build automation)
 
 ### Compilation
 
-To compile the RM Compiler, use the following command:
+#### Using Makefile (Recommended)
 
-```bash
-gcc -o Main Main.c 00_print.c 01_genTokens.c 02_genAST.c 03_semanticCheck.c 04_icg.c 05_optimization.c 06_tcg.c database.c
-```
-
-Or simply:
+The project includes a Makefile for easy compilation:
 
 ```bash
 make
 ```
 
----
+This will:
+- Compile all source files with warning flags (`-Wall -Wextra`)
+- Link the math library (`-lm`)
+- Produce the `RMc4` executable
 
-## 🎯 Usage
+Other Makefile targets:
+```bash
+make clean    # Remove compiled files and outputs
+make rebuild  # Clean and rebuild the entire project
+```
 
-To compile a C source file using the RM Compiler:
+#### Manual Compilation
+
+If you prefer to compile manually without Make:
 
 ```bash
-./Main <source_file.c>
+gcc -o RMc4 Main.c 00_print.c 00_01_printToFile.c 01_genTokens.c 02_genAST.c \
+    03_semanticCheck.c 04_icg.c 05_optimization.c 06_tcg.c 06_01_tcg_real.c \
+    database.c -lm -Wall -Wextra
+```
+
+### Running the Compiler
+
+```bash
+./RMc4 <source_file.c> compiler_output.txt
 ```
 
 **Example:**
-
 ```bash
-./Main tester/test.c
+./RMc4 tester/test.c compiler_output.txt
 ```
 
-This will:
-1. Tokenize the input source code
-2. Generate and print the Abstract Syntax Tree (AST)
-3. Perform semantic analysis and print the symbol table
-4. Generate three-address code (TAC)
-5. Perform optimization and generate basic blocks with control flow graph
-6. Generate target code (if enabled)
+**Note:** The output filename **must** be `compiler_output.txt` (this is enforced by the compiler).
+
+The compiler will process the input file through all compilation phases and generate:
+- **Terminal Output:** Phase progress and timing information
+- **File Output:** Detailed compilation results in `compiler_output.txt`
 
 ---
 
 ## 📂 Project Structure
 
 ```
-02/
-├── Main.c                    # Entry point of the compiler
-├── database.h                # Shared data structures and declarations
-├── database.c                # Utility functions for data structures
-├── 00_print.c                # Pretty printing functions for tokens, AST, TAC, blocks
-├── 01_genTokens.c            # Lexical analyzer (tokenizer)
-├── 02_genAST.c               # Syntax analyzer (parser, AST generator)
-├── 03_semanticCheck.c        # Semantic analyzer (type checking, scope validation)
-├── 04_icg.c                  # Intermediate code generator (TAC generation)
-├── 05_optimization.c         # Optimizer (CFG, basic blocks, optimizations)
-├── 06_tcg.c                  # Target code generator
-├── 06_01_tcg_real.c          # Advanced target code generator
-├── tester/                   # Test directory
-│   └── test.c                # Sample input programs
-├── README.md                 # This file
-└── RM_Syntax_Specification.md # Language syntax specification
+.
+├── Main.c                      # Entry point and compilation orchestration
+├── database.h                  # Core data structures and type definitions
+├── database.c                  # Utility functions
+│
+├── 00_print.c                  # Console output functions (disabled)
+├── 00_01_printToFile.c         # File output functions (active)
+│
+├── 01_genTokens.c              # Lexical analyzer (tokenizer)
+├── 02_genAST.c                 # Syntax analyzer (AST generator)
+├── 03_semanticCheck.c          # Semantic analyzer (type checker)
+├── 04_icg.c                    # Intermediate code generator (TAC)
+├── 05_optimization.c           # Code optimizer (CFG, basic blocks, optimizations)
+├── 06_tcg.c                    # Basic target code generator
+├── 06_01_tcg_real.c            # Real x86-64 assembly generator
+│
+├── Makefile                    # Build automation
+├── README.md                   # This file
+├── RM_Syntax_Specifications.md # Language syntax specification
+├── err.md                      # Error code documentation
+│
+├── output/                     # Compilation output directory
+│   └── compiler_output.txt     # Detailed compilation results
+│
+└── tester/                     # Test suite
+    ├── test.c                  # Main test file
+    ├── valid_test_cases/       # Test cases that should compile successfully
+    └── invalid_test_cases/     # Test cases that should fail with errors
 ```
 
 ---
 
 ## 🔧 Compilation Phases
 
-### 1. **Lexical Analysis (Tokenization)**
+### Phase 1: Lexical Analysis (Tokenization)
+**File:** `01_genTokens.c`
+
 - Reads source code character by character
-- Generates tokens (keywords, identifiers, operators, literals, etc.)
+- Recognizes keywords, identifiers, operators, literals, and delimiters
+- Generates a stream of tokens
 - Handles comments and whitespace
+- Produces error messages for invalid tokens
 
-### 2. **Syntax Analysis (Parsing)**
-- Builds an Abstract Syntax Tree (AST) from tokens
-- Validates syntactic correctness based on grammar rules
-- Supports nested expressions, control structures, and declarations
+**Output:** Token stream with types and values
 
-### 3. **Semantic Analysis**
-- Type checking and type inference
+---
+
+### Phase 2: Syntax Analysis (Parsing)
+**File:** `02_genAST.c`
+
+- Builds Abstract Syntax Tree (AST) from token stream
+- Implements recursive descent parsing
+- Handles operator precedence and associativity
+- Supports nested expressions and compound statements
+- Validates syntactic correctness
+
+**Output:** Hierarchical AST representation
+
+---
+
+### Phase 3: Semantic Analysis
+**File:** `03_semanticCheck.c`
+
+- Type checking for all expressions and operations
 - Variable declaration and scope validation
-- Symbol table management
-- Reports semantic errors (undeclared variables, type mismatches, etc.)
+- Symbol table construction and management
+- Array bounds checking
+- Operator compatibility verification
+- Generates warnings for unused variables
 
-### 4. **Intermediate Code Generation (ICG)**
-- Generates three-address code (TAC) from the AST
-- Converts high-level constructs into simple instructions
-- Produces linearized intermediate representation
+**Output:** Symbol table and semantic validation results
 
-### 5. **Code Optimization**
-- Constructs Control Flow Graph (CFG)
-- Forms basic blocks from three-address code
-- Performs data flow analysis (reaching definitions)
-- Applies various optimization techniques to improve code efficiency
+---
 
-### 6. **Target Code Generation**
+### Phase 4: Intermediate Code Generation (ICG)
+**File:** `04_icg.c`
+
+- Converts AST to three-address code (TAC)
+- Generates temporary variables
+- Creates labels for control flow
+- Linearizes complex expressions
+- Simplifies subsequent optimization and code generation
+
+**Output:** Three-address code instruction stream
+
+---
+
+### Phase 5: Code Optimization
+**File:** `05_optimization.c`
+
+Implements multiple optimization techniques:
+
+- **Control Flow Graph (CFG) Construction**
+  - Identifies basic blocks
+  - Builds flow relationships between blocks
+  - Visualizes program control flow
+
+- **Data Flow Analysis**
+  - Reaching definitions
+  - Live variable analysis
+  - Use-def chains
+
+- **Optimizations Applied**
+  - Constant folding
+  - Constant propagation
+  - Copy propagation
+  - Dead code elimination (DCE)
+  - Common subexpression elimination
+
+**Output:** Optimized TAC and basic block structure
+
+---
+
+### Phase 6: Target Code Generation
+**Files:** `06_tcg.c`, `06_01_tcg_real.c`
+
 - Generates x86-64 assembly code
-- Implements register allocation and instruction selection
-- Produces fully assemblable output
-- Supports compilation to executable binaries
+- Register allocation and management
+- Stack frame setup
+- Variable-to-stack-offset mapping
+- Function prologue and epilogue generation
+- Instruction selection
+
+**Output:** x86-64 assembly code (ready to assemble)
 
 ---
 
 ## 📊 Example
 
-### Input (`test.c`):
+### Input Program (`tester/test.c`)
 
 ```c
 int main() {
     int a;
     int b;
-    int c;
+    int result;
     
-    a = 5;
-    b = 10;
+    a = 10;
+    b = 20;
     
-    if (a > b) {
-        c = a + b;
+    if (a < b) {
+        result = b - a;
     } else {
-        c = b - a;
+        result = a - b;
     }
     
     return 0;
 }
 ```
 
-### Output:
+### Terminal Output
 
-The compiler will produce:
-1. **Token list** – All lexical tokens identified
-2. **AST** – Hierarchical tree representation of the program
-3. **Symbol Table** – All declared variables with their types and scopes
-4. **Three-Address Code** – Intermediate representation with temporary variables
-5. **Basic Blocks & CFG** – Control flow graph showing program structure
-6. **Optimized Code** – Improved intermediate representation
-7. **x86-64 Assembly** – Generated assembly code saved to external file
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Compiling Program: tester/test.c
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚙️  Generating tokens...
+✓ Token generation completed [took 1.234 ms]
+
+⚙️  Generating AST...
+✓ AST generation completed [took 2.345 ms]
+
+⚙️  Performing semantic check...
+✓ Semantic check completed [took 0.987 ms]
+
+⚙️  Generating 3-address code...
+✓ 3-address code generation completed [took 1.456 ms]
+
+⚙️  Running optimization process...
+✓ Optimization process completed [took 3.789 ms]
+
+⚙️  Generating target code (x86-64)...
+✓ Target code generation completed [took 2.012 ms]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Total compilation time: 11.823 ms
+  Output saved to: compiler_output.txt
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Compilation completed successfully!
+```
+
+### File Output (`compiler_output.txt`)
+
+Contains detailed information:
+- Complete token list with types and values
+- ASCII visualization of the AST
+- Symbol table with all variables and their properties
+- Three-address code before and after optimization
+- CFG (Control Flow Graph) structure
+- Optimization statistics (instruction counts, reduction percentage)
+- Generated x86-64 assembly code
+- Basic blocks with leader instructions
+- Control flow graph representation
+- Final x86-64 assembly code
 
 ---
 
 ## 🐛 Error Handling
 
-The compiler provides detailed error messages for:
-- **Lexical errors** – Invalid characters or malformed tokens
-- **Syntax errors** – Grammar violations
-- **Semantic errors** – Type mismatches, undeclared variables, scope violations
+The compiler provides comprehensive error reporting with:
 
-Each error includes:
-- Error code (e.g., `E || 03.01`)
-- Descriptive message
-- Context information
+- **Error Codes:** Structured error identification (e.g., `[03.05]`)
+- **Phase Identification:** Knows which phase detected the error
+- **Descriptive Messages:** Clear explanation of what went wrong
+- **Context Information:** Line numbers and relevant details
 
----
+### Error Categories
 
-## 📝 Language Specification
+- **01.xx** – Lexical errors (invalid tokens, unterminated strings)
+- **02.xx** – Syntax errors (grammar violations, missing tokens)
+- **03.xx** – Semantic errors (type mismatches, undeclared variables)
+- **04.xx** – ICG errors (code generation failures)
+- **05.xx** – Optimization errors (analysis failures)
+- **06.xx** – Target code generation errors
 
-### Supported Data Types:
-- `int` – Integer values
-- `double` – Floating-point values
-- `bool` – Boolean values (true/false)
-- `char` – Character values
-- Arrays of all above types
-
-### Supported Operators:
-- **Arithmetic:** `+`, `-`, `*`, `/`, `%`
-- **Relational:** `>`, `<`, `>=`, `<=`, `==`, `!=`
-- **Logical:** `&&`, `||`, `!`
-- **Assignment:** `=`
-
-### Supported Statements:
-- Variable declarations and assignments
-- `if`, `else` conditionals
-- `while`, `for` loops
-- Array initialization and access
+See `err.md` for complete error code documentation.
 
 ---
 
-## 🛣️ Roadmap
+## 🧪 Testing
 
-### ✅ Completed:
-- Lexical analysis
-- Syntax analysis with AST generation
-- Semantic analysis with symbol table
-- Three-address code generation
-- Control flow graph and basic block formation
-- Optimization framework
-- Target code generation (x86-64 assembly)
+### Test Suite Organization
 
-### 🔄 In Progress:
-- Advanced optimization techniques
+```
+tester/
+├── test.c                    # Primary test file
+├── valid_test_cases/         # Should compile successfully
+│   ├── test_01_basic_features.c
+│   ├── test_02_arrays_loops.c
+│   ├── test_03_complex_control.c
+│   └── ... (more tests)
+└── invalid_test_cases/       # Should fail with specific errors
+    ├── invalid_01_undeclared_var.c
+    ├── invalid_02_type_mismatch.c
+    ├── invalid_03_double_declaration.c
+    └── ... (more tests)
+```
+
+### Running Tests
+
+Test individual files:
+```bash
+./RMc4 tester/valid_test_cases/test_01_basic_features.c compiler_output.txt
+./RMc4 tester/invalid_test_cases/invalid_01_undeclared_var.c compiler_output.txt
+```
+
+Run all tests:
+```bash
+./run_all_tests.sh
+```
+
+---
+
+## 🛠️ Technical Details
+
+### Memory Management
+- Static allocation for most data structures
+- Controlled dynamic allocation for specific components
+- Bounded arrays with `MAX` constants for safety
+
+### Algorithm Highlights
+- **Recursive descent parsing** for syntax analysis
+- **Symbol table** implemented as array-based structure with scope tracking
+- **Operator precedence** handled via lookup table
+- **CFG construction** using leader-based basic block identification
+- **Data flow analysis** using iterative algorithms
+
+### Performance
+- Typical compilation time: < 20ms for small programs
+- Optimized for educational clarity over raw performance
+- Scales well for programs up to several hundred lines
+
+---
+
+## 📚 Documentation
+
+- **[RM_Syntax_Specifications.md](RM_Syntax_Specifications.md)** – Complete language syntax reference
+- **[err.md](err.md)** – Comprehensive error code documentation
+- **Code Comments** – All source files include detailed inline documentation
+
+---
+
+## 🎓 Educational Value
+
+This compiler serves as an excellent learning resource for:
+- Understanding compiler design principles
+- Learning multi-phase compilation
+- Studying data structure applications
+- Exploring optimization techniques
+- Understanding x86-64 architecture
+
+### Based on Compiler Theory From:
+- "Compilers: Principles, Techniques, and Tools" (Dragon Book)
+- Modern compiler construction practices
+- Data flow analysis theory
+- Assembly language and computer architecture
 
 ---
 
 ## 👨‍💻 Author
 
-**Ridham Khurana (RM)**  
-Level-2 C Compiler Implementation
+**Ridham Khurana (RM)**
+
+This compiler was developed as an educational project to demonstrate deep understanding of compiler design, implementation, and optimization techniques.
 
 ---
 
 ## 📄 License
 
-This project is an educational compiler implementation.  
-Feel free to use and modify for learning purposes.
+This project is released for **educational purposes**. Feel free to use, modify, and learn from the code.
 
 ---
 
-## � Acknowledgments
+## 📚 Acknowledgments
 
-Built as part of compiler design coursework, incorporating principles from:
-- "Compilers: Principles, Techniques, and Tools" (Dragon Book)
-- Modern compiler construction practices
-- Data flow analysis and optimization theory
+- Compiler design course materials and textbooks
+- Open-source compiler projects for inspiration
+- x86-64 assembly documentation and references
 
 ---
 
-## 💬 Contact
+## 📞 Contact
 
-For questions, suggestions, or bug reports, please open an issue on the repository.
+For questions, suggestions, or feedback:
+- Open an issue on the repository
+- Review the documentation files for detailed information
+- Check `err.md` for error-specific queries
+
+---
+
+<div align="center">
+
+**Built with dedication to compiler design excellence**
+
+⭐ If you find this project helpful, please consider starring it!
+
+</div>
 

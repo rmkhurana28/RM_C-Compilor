@@ -1,4 +1,5 @@
 # Compiled binaries
+RMc4
 Main
 *.out
 *.exe
@@ -12,6 +13,10 @@ Main
 *.asm
 output.s
 output.asm
+
+# Compiler output (keep directory but ignore contents)
+output/*
+!output/.gitkeep
 
 # Core dumps
 core

@@ -1,3 +1,16 @@
+/**
+ * 06_tcg.c - Basic Target Code Generator
+ * 
+ * This module generates basic assembly-like target code from the optimized
+ * intermediate representation. This is a simplified version for educational purposes.
+ * 
+ * Author: Ridham Khurana
+ */
+
+// suppress format overflow warnings - buffers are sized correctly
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-overflow"
+
 #include "database.h"
 
 // storage for generated assembly code
@@ -120,7 +133,6 @@ void generateEpilogue() {
 // generate assembly for simple assignment: result = arg1
 void generateAssign(address* addr) {
     char instr[256];
-    char src[128], dst[128];
     
     if (isNumber(addr->assign.arg1)) {
         // Immediate to register/memory

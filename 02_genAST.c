@@ -1,3 +1,19 @@
+/**
+ * 02_genAST.c - Syntax Analyzer (Abstract Syntax Tree Generator)
+ * 
+ * This module performs syntax analysis by parsing tokens and constructing
+ * an Abstract Syntax Tree (AST) representation of the program.
+ * 
+ * Features:
+ * - Recursive descent parsing
+ * - Expression parsing with operator precedence
+ * - Statement parsing (declarations, assignments, control flow)
+ * - AST node generation for all language constructs
+ * - Support for nested expressions and compound statements
+ * 
+ * Author: Ridham Khurana
+ */
+
 #include "database.h"
 
 // precedence lookup
@@ -33,6 +49,7 @@ PrecedenceLookup preLookup[] = {
 
 ASTNode *parseStatement();
 
+// get operator precedence value for given token type
 int getPrecedenceValueOf(tokenType type)
 {
     int size = sizeof(preLookup) / sizeof(preLookup[0]);
@@ -44,6 +61,7 @@ int getPrecedenceValueOf(tokenType type)
     return -1;
 }
 
+// create ast node for integer literal
 ASTNode *generateIntASTNode(int int_value)
 {
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
@@ -62,6 +80,7 @@ ASTNode *generateIntASTNode(int int_value)
     return temp;
 }
 
+// create ast node for double literal
 ASTNode *generateDoubleASTNode(double double_value)
 {
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
@@ -80,6 +99,7 @@ ASTNode *generateDoubleASTNode(double double_value)
     return temp;
 }
 
+// create ast node for boolean literal
 ASTNode *generateBoolASTNode(bool bool_value)
 {
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
@@ -98,6 +118,7 @@ ASTNode *generateBoolASTNode(bool bool_value)
     return temp;
 }
 
+// create ast node for character literal
 ASTNode *generateCharASTNode(char char_value)
 {
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
@@ -116,6 +137,7 @@ ASTNode *generateCharASTNode(char char_value)
     return temp;
 }
 
+// create ast node for string literal
 ASTNode* generateStringASTNode(char* str_value){
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
 
@@ -131,6 +153,7 @@ ASTNode* generateStringASTNode(char* str_value){
     return temp;
 }
 
+// create ast node for variable reference
 ASTNode *generateVarASTNode(char *var_name)
 {
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
@@ -149,6 +172,7 @@ ASTNode *generateVarASTNode(char *var_name)
     return temp;
 }
 
+// create ast node for variable declaration with optional initialization
 ASTNode *generateDeclASTNode(char *var_name , tokenType type , ASTNode *init_expr , bool isArray , char* arrSize)
 {
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
@@ -173,6 +197,7 @@ ASTNode *generateDeclASTNode(char *var_name , tokenType type , ASTNode *init_exp
     return temp;
 }
 
+// create ast node for assignment statement
 ASTNode *generateAssignASTNode(ASTNode* var, ASTNode *expr)
 {
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
@@ -335,7 +360,7 @@ ASTNode *generateBlockASTNode(ASTNode **statements, int statement_count)
     ASTNode *temp = (ASTNode *)malloc(sizeof(ASTNode));
     temp->type = AST_BLOCK;
 
-    // ✅ Allocate new memory for the statement list
+    // Allocate and copy statement array to ensure proper memory ownership
     temp->block.statements = malloc(statement_count * sizeof(ASTNode*));
     for (int i = 0; i < statement_count; i++)
         temp->block.statements[i] = statements[i];

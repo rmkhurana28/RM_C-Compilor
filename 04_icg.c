@@ -1,3 +1,21 @@
+/**
+ * 04_icg.c - Intermediate Code Generator (Three-Address Code)
+ * 
+ * This module generates three-address code (TAC) from the validated AST.
+ * TAC is a linearized, low-level representation that simplifies optimization
+ * and target code generation.
+ * 
+ * Features:
+ * - Expression translation to TAC
+ * - Control flow translation (if, while, for)
+ * - Array operations handling
+ * - Temporary variable generation
+ * - Label generation for jumps
+ * - Structured TAC instruction stream
+ * 
+ * Author: Ridham Khurana
+ */
+
 #include "database.h"
 
 int temp_var_used = 0;
@@ -261,15 +279,34 @@ address* genAddr(ASTNode* top);
 
 // handle variable declaration and array initialization
 address* handleDeclNodes(ASTNode* top){
-    address* expr = genAddr(top->decl.init_expr);
     
     if(top->decl.is_array){ // array initialization
-        char value[MAX_NAME];
-        sprintf(value , "%c" , top->decl.array_size);
-        address* index = genAssign(generateNewAddrResult() , value);
-        return genArrayWrite(top->decl.var_name , getVariableName(index) , getVariableName(expr));
+        // Check if initialization exists and is an AST_BLOCK (array initializer list)
+        if(top->decl.init_expr && top->decl.init_expr->type == AST_BLOCK){
+            // Array initialization with {...} values
+            // Generate code to assign each element: arr[i] = value
+            for(int i = 0; i < top->decl.init_expr->block.statement_count; i++){
+                address* elem = genAddr(top->decl.init_expr->block.statements[i]);
+                char index_str[MAX_NAME];
+                sprintf(index_str, "%d", i);
+                genArrayWrite(top->decl.var_name, index_str, getVariableName(elem));
+            }
+            return NULL; // array initialization doesn't return a value
+        } else if(top->decl.init_expr){
+            // Single value initialization (shouldn't happen for arrays, but handle it)
+            address* expr = genAddr(top->decl.init_expr);
+            char value[MAX_NAME];
+            sprintf(value , "%s" , top->decl.array_size);
+            address* index = genAssign(generateNewAddrResult() , value);
+            return genArrayWrite(top->decl.var_name , getVariableName(index) , getVariableName(expr));
+        }
+        return NULL; // array declaration without initialization
     } else{ // simple variable assignment
-        return genAssign(top->decl.var_name , getVariableName(expr));
+        if(top->decl.init_expr){
+            address* expr = genAddr(top->decl.init_expr);
+            return genAssign(top->decl.var_name , getVariableName(expr));
+        }
+        return NULL; // declaration without initialization
     }
 }
 
@@ -283,7 +320,8 @@ address* handleAssignNodes(ASTNode* top){
         address* index = genAddr(top->assign.var->array_access.sizeExpr);
         return genArrayWrite(top->assign.var->array_access.array_name , getVariableName(index) , getVariableName(expr));
     }
-
+    
+    return NULL;
 }
 
 // handle binary operations like +, -, *, /, <, >, ==, etc.
@@ -306,7 +344,7 @@ address* handleUnOpNodes(ASTNode* top){
             help = genBinOp(generateNewAddrResult() , getVariableName(help) , opToString(top->unop.op) , "1");
             if(top->unop.expr->type == AST_ARRAY_ACCESS){ // array element
                 address* index = genAddr(top->unop.expr->array_access.sizeExpr);
-                address* helper = genArrayWrite(top->unop.expr->array_access.array_name , getVariableName(index) , getVariableName(help));
+                genArrayWrite(top->unop.expr->array_access.array_name , getVariableName(index) , getVariableName(help));
                 return genAssign(generateNewAddrResult() , getVariableName(help));
             } else{ // simple variable
                 genAssign(top->unop.expr->var.var_name , getVariableName(help));
@@ -317,7 +355,7 @@ address* handleUnOpNodes(ASTNode* top){
             address* spec = genBinOp(generateNewAddrResult() , getVariableName(help) , opToString(top->unop.op) , "1");
             if(top->unop.expr->type == AST_ARRAY_ACCESS){ // array element
                 address* index = genAddr(top->unop.expr->array_access.sizeExpr);
-                address* helper = genArrayWrite(top->unop.expr->array_access.array_name , getVariableName(index) , getVariableName(spec));
+                genArrayWrite(top->unop.expr->array_access.array_name , getVariableName(index) , getVariableName(spec));
                 return genAssign(generateNewAddrResult() , getVariableName(help));
             } else{ // simple variable
                 genAssign(top->unop.expr->var.var_name , getVariableName(spec));
@@ -370,6 +408,8 @@ address* handleIfElseNode(ASTNode* top){
     }
 
     genLabel(temp_label_2); // label after if-else block
+    
+    return NULL;
 }
 
 // handle WHILE loop: while(condition) body
@@ -392,11 +432,13 @@ address* handleWhileNode(ASTNode* top){
 
     genGoto(temp_label_2); // jump back to condition check
     genLabel(temp_label); // label after while loop
+    
+    return NULL;
 }
 
 // handle FOR loop: for(init; condition; update) body
 address* handleForNode(ASTNode* top){
-    address* init = genAddr(top->for_stmt.init); // initialization
+    genAddr(top->for_stmt.init); // initialization
 
     char* temp_label = generateNewAddrLabel();
 
@@ -413,11 +455,13 @@ address* handleForNode(ASTNode* top){
         genAddr(top->for_stmt.body->block.statements[i]);
     }
 
-    address* update = genAddr(top->for_stmt.update); // update expression
+    genAddr(top->for_stmt.update); // update expression
 
     genGoto(temp_label); // jump back to condition check
 
     genLabel(temp_label_2); // label after for loop
+    
+    return NULL;
 }
 
 // main function to generate 3-address code from AST nodes

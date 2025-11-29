@@ -1,3 +1,25 @@
+/**
+ * 06_01_tcg_real.c - Real x86-64 Target Code Generator
+ * 
+ * This module generates actual x86-64 assembly code from the optimized
+ * intermediate representation. The output can be assembled and linked
+ * to create an executable program.
+ * 
+ * Features:
+ * - Register allocation and management
+ * - Stack frame setup and management
+ * - Variable-to-stack-offset mapping
+ * - x86-64 instruction generation
+ * - Function prologue and epilogue
+ * - Memory addressing modes
+ * 
+ * Author: Ridham Khurana
+ */
+
+// suppress format overflow warnings - buffers are sized correctly
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-overflow"
+
 #include "database.h"
 
 // structure to map variables to stack offsets
@@ -83,7 +105,9 @@ bool isRealLabel(const char* str) {
     return true;
 }
 
-// get stack offset for a variable or temp (allocate if not found)
+// Get or allocate stack offset for a variable
+// Variables are stored on the stack with negative offsets from %rbp
+// Arrays get space for all elements (8 bytes each)
 int getStackOffset(const char* var_name) {
     // check if already mapped
     for (int i = 0; i < var_map_count; i++) {

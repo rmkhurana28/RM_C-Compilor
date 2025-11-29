@@ -1,6 +1,7 @@
-# RM Compiler Makefile
+# RMc4 Compiler Makefile
+# RMc4 = RM (Ridham Khurana) + c4 (Level-4 Compiler)
 # Author: Ridham Khurana (RM)
-# Date: November 23, 2025
+# Date: November 2025
 
 # Compiler and flags
 CC = gcc
@@ -8,11 +9,12 @@ CFLAGS = -Wall -Wextra -g -std=c11
 LDFLAGS = -lm
 
 # Target executable
-TARGET = Main
+TARGET = RMc4
 
 # Source files
 SRCS = Main.c \
        00_print.c \
+       00_01_printToFile.c \
        01_genTokens.c \
        02_genAST.c \
        03_semanticCheck.c \
@@ -48,6 +50,7 @@ clean:
 	rm -f $(OBJS) $(TARGET)
 	rm -f *.s *.asm output.s output.asm
 	rm -f tester/*.s tester/*.asm tester/*.out tester/test
+	rm -f output/compiler_output.txt compiler_output.txt
 	@echo "Clean complete."
 
 # Clean and rebuild
@@ -56,7 +59,7 @@ rebuild: clean all
 # Run the compiler with default test file
 run: $(TARGET)
 	@echo "Running $(TARGET) with tester/test.c..."
-	./$(TARGET) tester/test.c
+	./$(TARGET) tester/test.c compiler_output.txt
 
 # Run with custom file (usage: make test FILE=yourfile.c)
 test: $(TARGET)
@@ -65,7 +68,7 @@ test: $(TARGET)
 		exit 1; \
 	fi
 	@echo "Running $(TARGET) with $(FILE)..."
-	./$(TARGET) $(FILE)
+	./$(TARGET) $(FILE) compiler_output.txt
 
 # Install (optional - copies to /usr/local/bin)
 install: $(TARGET)
@@ -81,8 +84,10 @@ uninstall:
 
 # Show help
 help:
-	@echo "RM Compiler - Makefile Help"
-	@echo "============================"
+	@echo "RMc4 Compiler - Makefile Help"
+	@echo "=============================="
+	@echo "RMc4 = RM (Ridham Khurana) + c4 (Level-4 Compiler)"
+	@echo ""
 	@echo "Available targets:"
 	@echo "  make              - Build the compiler (default)"
 	@echo "  make all          - Build the compiler"

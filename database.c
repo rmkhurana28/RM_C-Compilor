@@ -1,34 +1,50 @@
+/**
+ * database.c - Utility Functions and Data Structure Operations
+ * 
+ * This module provides utility functions for managing and manipulating
+ * the core data structures used throughout the compiler.
+ * 
+ * Author: Ridham Khurana
+ */
+
 #include "database.h"
 
-// Define globals
-Token* tokens[MAX];
-int token_count = 0;
+// ============================================================================
+// GLOBAL VARIABLE DEFINITIONS
+// ============================================================================
 
-ASTNode* all_ast[MAX];
-int ast_count = 0;
+// Lexical Analysis
+Token* tokens[MAX];              // Array of all tokens from the lexer
+int token_count = 0;             // Current number of tokens
 
-int ast_current_index = 0;
+// Syntax Analysis  
+ASTNode* all_ast[MAX];           // Array of all AST nodes
+int ast_count = 0;               // Current number of AST nodes
+int ast_current_index = 0;       // Index for AST traversal/construction
 
-// symbol table 
-symbol* symbolTable[MAX];
+// Semantic Analysis
+symbol* symbolTable[MAX];        // Symbol table for variables and arrays
+int symbol_count = 0;            // Number of symbols in the table
 
-// number of symbols in symbol table
-int symbol_count = 0;
+// Warnings
+char* all_warnings[MAX];         // Array of warning messages
+int warning_count = 0;           // Number of warnings generated
 
-char* all_warnings[MAX];
-int warning_count = 0;
+// Intermediate Code (Three-Address Code)
+address* allAddress[MAX];        // Array of all TAC instructions
+int addr_count = 0;              // Number of TAC instructions
 
-address* allAddress[MAX];
-int addr_count = 0;
+// Optimization Data Structures
+block* allBlocks[MAX];           // Array of basic blocks for CFG
+int block_count = 0;             // Number of basic blocks
 
-// block storage
-block* allBlocks[MAX];
-int block_count = 0;
+blockProp* allBlockProps[MAX];   // Reaching definitions analysis data
+int block_prop_count = 0;        // Number of block properties
 
-// GEN/KILL/IN/OUT storage
-blockProp* allBlockProps[MAX];
-int block_prop_count = 0;
+blockPropLive* allBlockPropsLive[MAX]; // Live variable analysis data
+int block_prop_live_count = 0;   // Number of live variable properties
 
+// Token type name lookup table for display purposes
 const char* tokenTypeNames[] = {
     "KEYWORD_INT", "KEYWORD_CHAR", "KEYWORD_DOUBLE", "KEYWORD_BOOL",
     "KEYWORD_IF", "KEYWORD_ELSE", "KEYWORD_WHILE", "KEYWORD_FOR",
@@ -42,19 +58,30 @@ const char* tokenTypeNames[] = {
     "MISC_EOF", "MISC_UNKNOWN"
 };
 
-// define functions
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
 
-bool isStringSame(char *str1 , char *str2){
+/**
+ * isStringSame - Compare two null-terminated strings for equality
+ * 
+ * @param str1: First string to compare
+ * @param str2: Second string to compare
+ * @return: true if strings are identical, false otherwise
+ */
+bool isStringSame(char *str1, char *str2){
+    // Compare characters until end of either string
     while(*str1 != '\0' && *str2 != '\0'){
-        if(*str1 != *str2) return false;
+        if(*str1 != *str2) return false;  // Mismatch found
         
         str1++;
         str2++;
     }
 
-    if(*str1 != '\0' || *str2 != '\0') return false;
+    // Check if both strings ended at the same position
+    if(*str1 != '\0' || *str2 != '\0') return false;  // Length mismatch
 
-    return true;
+    return true;  // Strings are identical
 }
 
 

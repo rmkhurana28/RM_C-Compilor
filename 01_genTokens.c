@@ -1,3 +1,19 @@
+/**
+ * 01_genTokens.c - Lexical Analyzer (Tokenizer)
+ * 
+ * This module performs lexical analysis on the source code, converting
+ * raw text into a stream of tokens for the parser.
+ * 
+ * Features:
+ * - Keyword recognition (int, char, double, bool, if, else, while, for)
+ * - Operator tokenization (arithmetic, logical, relational, unary)
+ * - Literal value parsing (integers, doubles, booleans, characters, strings)
+ * - Identifier extraction
+ * - Comment and whitespace handling
+ * 
+ * Author: Ridham Khurana
+ */
+
 #include "database.h"
 
 // Symbol-to-token lookup table
@@ -209,12 +225,12 @@ void generateTokens(char* file_name){
         exit(1);
     }
 
-    printf("File [%s] opened succesfully\n" , file_name); // file is opened 
+    // printf("File [%s] opened succesfully\n" , file_name); // file is opened 
 
 
     skipTopLines(fptr); // skip lines before entering into the main
 
-    printf("current-pointor = %c\n", fgetc(fptr));
+    // printf("current-pointor = %c\n", fgetc(fptr));
 
     char c = fgetc(fptr); // pointor to read file
     c = fgetc(fptr);
@@ -251,7 +267,8 @@ void generateTokens(char* file_name){
     fclose(fptr); // close the file
 }
 
-// skip preprocessor directives, comments, and lines before main function
+// Skip preprocessor directives, comments, and everything before the opening brace
+// This positions the file pointer at the start of the actual program code
 void skipTopLines(FILE* fptr) {
     if (!fptr) return;
 
@@ -336,10 +353,11 @@ tokenType getTokenTypeOf(char* temp_name){
 
 // get appropriate storage function for token type
 StoreFunc getStoreFunctionOf(char* temp_name , tokenType type){
+    (void)temp_name; // unused parameter
     
     StoreFunc storeFunc = storeString; // default
     
-    for (int i = 0; i < sizeof(tokenStoreMap)/sizeof(tokenStoreMap[0]); i++) {
+    for (size_t i = 0; i < sizeof(tokenStoreMap)/sizeof(tokenStoreMap[0]); i++) {
         if (tokenStoreMap[i].type == type) {
             storeFunc = tokenStoreMap[i].func;
             break;
@@ -445,9 +463,44 @@ CharType getCharTypeOf(char c){
 
 // read next token from file (handles strings, chars, operators, identifiers)
 char* readNext(FILE* fptr){
-    char c = fgetc(fptr);
+    int ci = fgetc(fptr);
+    if (ci == EOF) return NULL;
 
-    while(c == ' ' || c == '\n' || c == '\t') c = fgetc(fptr); // skip initial
+    // skip initial whitespace
+    while (ci != EOF && (ci == ' ' || ci == '\n' || ci == '\t')) ci = fgetc(fptr);
+    if (ci == EOF) return NULL;
+
+    // If we encounter comments (single-line // or multi-line /* */), skip them
+    while (ci == '/') {
+        int next = fgetc(fptr);
+        if (next == '/') { // single-line comment
+            while ((ci = fgetc(fptr)) != EOF && ci != '\n');
+            if (ci == EOF) return NULL;
+            // move to next char after newline and skip whitespace
+            ci = fgetc(fptr);
+            while (ci != EOF && (ci == ' ' || ci == '\n' || ci == '\t')) ci = fgetc(fptr);
+            if (ci == EOF) return NULL;
+            continue; // re-evaluate in case of consecutive comments
+        } else if (next == '*') { // multi-line comment
+            int prev = 0;
+            while ((ci = fgetc(fptr)) != EOF) {
+                if (prev == '*' && ci == '/') break;
+                prev = ci;
+            }
+            if (ci == EOF) return NULL;
+            // move to next char after comment and skip whitespace
+            ci = fgetc(fptr);
+            while (ci != EOF && (ci == ' ' || ci == '\n' || ci == '\t')) ci = fgetc(fptr);
+            if (ci == EOF) return NULL;
+            continue;
+        } else {
+            // not a comment; put back the char after '/'
+            ungetc(next, fptr);
+            break;
+        }
+    }
+
+    char c = (char)ci;
 
     static char temp_name[MAX_NAME];
     int temp_name_count = 0;
@@ -462,12 +515,10 @@ char* readNext(FILE* fptr){
         return temp_name;
     }
 
-    
-
-    if(c == '\''){ // found starting '
-        // read untill next '
+    if(c == 39){ // found starting '\'' (ASCII 39)
+        // read until next '\''
         c = fgetc(fptr);
-        while(c != EOF && c != '\''){
+        while(c != EOF && c != 39){
             temp_name[temp_name_count++] = c;
             c = fgetc(fptr);
         }
@@ -479,7 +530,7 @@ char* readNext(FILE* fptr){
         temp_name[temp_name_count] = '\0';
         return temp_name;
     } else if(c == '\"'){ //found starting "
-        // read untill next "
+        // read until next "
         c = fgetc(fptr);
         while(c != EOF && c != '\"'){
             temp_name[temp_name_count++] = c;
@@ -496,7 +547,6 @@ char* readNext(FILE* fptr){
     }     
     else {}
 
-    
     bool isEqual = false;
 
     while(c != EOF && c != '\n' && c != '\t'){

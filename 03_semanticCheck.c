@@ -1,6 +1,23 @@
+/**
+ * 03_semanticCheck.c - Semantic Analyzer
+ * 
+ * This module performs semantic analysis on the AST, ensuring type safety,
+ * scope correctness, and other semantic rules are followed.
+ * 
+ * Features:
+ * - Type checking for all expressions and statements
+ * - Variable declaration and scope validation
+ * - Symbol table construction and management
+ * - Array bounds and initialization checking
+ * - Operator compatibility verification
+ * - Warning generation for unused variables
+ * 
+ * Author: Ridham Khurana
+ */
+
 #include "database.h"
 
-// helping variable used to dod type checking
+// helping variable used to do type checking
 int currScope = 0;
 int currBlockId = 0;
 
@@ -67,7 +84,8 @@ tokenType getTypeOfSymbolFromName(char* name , bool isArray){
     exit(3);
 }
 
-// check if symbol exists in symbol table
+// Check if a symbol is declared and accessible from the current scope
+// Variables are accessible if declared in current or outer scopes (currScope >= store->scope)
 bool isSymbolDeclared(char* name , bool isArray){
     for(int i=0 ; i<symbol_count ; i++){
         symbol* store = symbolTable[i];
@@ -93,7 +111,7 @@ bool isStringANumber(char* arrSize){
 
 // add symbol to symbol table
 symbol* addSymbol(char* name , tokenType type , bool isArray , char* arrSize , bool isInitialized , int scope , int blockId){
-
+    (void)blockId; // unused parameter
     
     if(isSymbolDeclared(name , isArray)){ // symbol already declared in the scope
         printf("03 || Semantic Check error [03.22] -> Variable (%s) already exists in current scope\n" , name);
@@ -203,8 +221,8 @@ tokenType getOutputTokenTypeOfAST(ASTNode* top){
 
     if(top->type == AST_NUM){ // Integer node
         return KEYWORD_INT;
-    } else if(top->type == AST_DOUBLE){ // Double nodde
-        return KEYWORD_CHAR;
+    } else if(top->type == AST_DOUBLE){ // Double node
+        return KEYWORD_DOUBLE;
     } else if(top->type == AST_CHAR){ // Char node
         return KEYWORD_CHAR;
     } else if(top->type == AST_BOOL){ // Bool node
@@ -227,6 +245,17 @@ tokenType getOutputTokenTypeOfAST(ASTNode* top){
             if((left != KEYWORD_INT && left != KEYWORD_DOUBLE) || (right != KEYWORD_INT && right != KEYWORD_DOUBLE)){ // left and right must be either int/double
                 printf("03 || Semantic Check error [03.12] -> Expected INT/DOUBLE around binop\n");
                 exit(3);                                
+            }
+            
+            // Check for division by zero
+            if(top->binop.op == OP_DIV){
+                if(top->binop.right->type == AST_NUM && top->binop.right->int_value == 0){
+                    printf("03 || Semantic Check error [03.22] -> Division by zero detected\n");
+                    exit(3);
+                } else if(top->binop.right->type == AST_DOUBLE && top->binop.right->double_value == 0.0){
+                    printf("03 || Semantic Check error [03.22] -> Division by zero detected\n");
+                    exit(3);
+                }
             }
             
             if(left == KEYWORD_INT && right == KEYWORD_INT) return KEYWORD_INT; // both are int
@@ -333,9 +362,18 @@ void checkAST(ASTNode* top){
         if(!top->decl.init_expr) init = false; // ONLY declaration, no initialization
         
         // check if the right expr type is same as decl type 
-        if(init){ // initialization exist 
-            if(!checkIfTokenTypeMatch(top->decl.type , top->decl.init_expr)){ // ecpr didnt match             
-                printf("03 || Semantic Check error [03.02] -> Declation type error\n");
+        if(init){ // initialization exist
+            // Special case: array initialization with {...} creates AST_BLOCK
+            if(top->decl.is_array && top->decl.init_expr->type == AST_BLOCK){
+                // Array initialization with constant values - validate each element
+                for(int i = 0; i < top->decl.init_expr->block.statement_count; i++){
+                    if(!checkIfTokenTypeMatch(top->decl.type, top->decl.init_expr->block.statements[i])){
+                        printf("03 || Semantic Check error [03.02] -> Array initialization element type mismatch\n");
+                        exit(3);
+                    }
+                }
+            } else if(!checkIfTokenTypeMatch(top->decl.type , top->decl.init_expr)){ // expr didnt match             
+                printf("03 || Semantic Check error [03.02] -> Declaration type error\n");
                 exit(3);            
             }
         }
@@ -413,7 +451,7 @@ void checkAST(ASTNode* top){
         currScope++; // increment the scope for init, conditon and update of FOR
         checkAST(top->for_stmt.init); // evaluate FOR init
         checkAST(top->for_stmt.condition); // evaluate FOR condition
-        if(checkIfTokenTypeMatch(KEYWORD_BOOL , top->for_stmt.condition)){
+        if(!checkIfTokenTypeMatch(KEYWORD_BOOL , top->for_stmt.condition)){
             strcpy(tempWarningContainer , "03 || Semantic Check WARNING [W || 03.07] -> Expected BOOL in condition of FOR\n");
             addWarning(tempWarningContainer);
         }

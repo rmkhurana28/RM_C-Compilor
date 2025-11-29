@@ -1,6 +1,6 @@
 # RM Compiler – Syntax Specification
 
-This document defines the syntax rules and language constructs supported by the **RM Compiler (Level-2 C Compiler)**.  
+This document defines the syntax rules and language constructs supported by the **RM Compiler (Level-4 C Compiler)**.  
 It serves as a reference for all valid program structures, data types, operators, and statements recognized by the compiler.
 
 ---
