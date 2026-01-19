@@ -154,6 +154,35 @@ The compiler will process the input file through all compilation phases and gene
     └── invalid_test_cases/     # Test cases that should fail with errors
 ```
 
+
+## 🧪 Example Test Case Used in All Phases
+
+The following C program is used throughout the walkthrough to demonstrate each stage of the compiler pipeline:
+
+```c
+int main() {
+    int x = 5;      
+    int y = 10;     
+    int z = x + y;  
+    
+    int a = 3;      
+
+    if(a > 1) {
+        z = 10 + 87;
+    } else {
+        y = z--;
+    }
+
+    a = z - y + 10;
+
+    int arr[5];
+    arr[2] = a;     
+}
+```
+
+This test case serves as the common input for all compilation stages demonstrated below.
+
+
 ---
 
 ## 🔧 Compilation Phases
@@ -169,6 +198,11 @@ The compiler will process the input file through all compilation phases and gene
 
 **Output:** Token stream with types and values
 
+**Output Screenshot:** Partial token stream for the example test case (first few tokens shown for readability).
+
+<img width="903" height="902" alt="Screenshot from 2026-01-19 12-08-35" src="https://github.com/user-attachments/assets/4c9dfefa-3be0-45fa-99dc-b6ada4ecb68f" />
+
+
 ---
 
 ### Phase 2: Syntax Analysis (Parsing)
@@ -181,6 +215,11 @@ The compiler will process the input file through all compilation phases and gene
 - Validates syntactic correctness
 
 **Output:** Hierarchical AST representation
+
+**Output Screenshot:** AST representation of the `if–else` statement from the example test case.
+
+<img width="881" height="498" alt="image" src="https://github.com/user-attachments/assets/2bf514e0-1070-4bd8-8de0-d685b29df7e3" />
+
 
 ---
 
@@ -196,6 +235,11 @@ The compiler will process the input file through all compilation phases and gene
 
 **Output:** Symbol table and semantic validation results
 
+**Output Screenshot:** Semantic analysis summary and symbol table for the example test case.
+
+<img width="851" height="456" alt="image" src="https://github.com/user-attachments/assets/9593ebb1-4f96-4507-8e2a-359187feb718" />
+
+
 ---
 
 ### Phase 4: Intermediate Code Generation (ICG)
@@ -208,6 +252,10 @@ The compiler will process the input file through all compilation phases and gene
 - Simplifies subsequent optimization and code generation
 
 **Output:** Three-address code instruction stream
+
+**Output Screenshot:** Three-address code (TAC) generated from the AST before optimization.
+
+<img width="749" height="823" alt="Screenshot from 2026-01-19 12-21-08" src="https://github.com/user-attachments/assets/32e17580-7d95-4699-896c-7704d2a65d04" />
 
 ---
 
@@ -235,6 +283,11 @@ Implements multiple optimization techniques:
 
 **Output:** Optimized TAC and basic block structure
 
+**Output Screenshot:** Optimized three-address code (TAC) after applying data-flow optimizations, showing reduced instruction count and code size.
+
+<img width="761" height="657" alt="Screenshot from 2026-01-19 12-27-42" src="https://github.com/user-attachments/assets/1143cdcf-b837-4e86-be54-c35eaec35c61" />
+
+
 ---
 
 ### Phase 6: Target Code Generation
@@ -248,6 +301,11 @@ Implements multiple optimization techniques:
 - Instruction selection
 
 **Output:** x86-64 assembly code (ready to assemble)
+
+**Output Screenshot:** Final x86-64 assembly code generated from the optimized TAC, including stack management, control flow, and array access.
+
+<img width="757" height="910" alt="image" src="https://github.com/user-attachments/assets/f024ed22-6047-4671-b267-4331d5ba42ef" />
+
 
 ---
 
